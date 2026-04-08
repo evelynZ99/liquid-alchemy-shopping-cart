@@ -123,19 +123,19 @@ ecommerce-shopping-cart/
 
 ## Folder Explanation
 
-frontend/
+`frontend/`
 
 Contains the React application, page layout, UI styling, and API request logic.
 
-backend/
+`backend/`
 
 Contains the FastAPI server, database connection, SQLModel models, and API endpoints.
 
-frontend/public/images/
+`frontend/public/images/`
 
 Stores all local product images used in the landing page and cart drawer.
 
-database/
+`database/`
 
 Contains documentation and SQL reference files for the database structure.
 
@@ -144,48 +144,48 @@ Contains documentation and SQL reference files for the database structure.
 ## Database Structure
 
 This project uses a MySQL database named:
-- ecommerce_cart_db
+- `ecommerce_cart_db`
 
 Main tables:
-- product
-- cartitem
+- `product`
+- `cartitem`
 
 product
 
 Stores cocktail and product data shown on the landing page.
 
 Fields:
-- id
-- name
-- description
-- price
-- image_url
-- category
-- stock
+- `id`
+- `name`
+- `description`
+- `price`
+- `image_url`
+- `category`
+- `stock`
 
 cartitem
 
 Stores products added to the shopping cart.
 
 Fields:
-- id
-- product_id
-- quantity
+- `id`
+- `product_id`
+- `quantity`
 
 ---
 
 ## API Endpoints
 
 Product Endpoints
-- GET /products — get all products
-- POST /seed-products — insert sample product data
+- `GET /products` — get all products
+- `POST /seed-products` — insert sample product data
 
 Cart Endpoints
-- GET /cart — get all cart items
-- POST /cart — add a product to cart
-- PUT /cart/{cart_item_id} — update cart item quantity
-- DELETE /cart/{cart_item_id} — remove a single cart item
-- DELETE /cart — clear the entire cart
+- `GET /cart` — get all cart items
+- `POST /cart` — add a product to cart
+- `PUT /cart/{cart_item_id}` — update cart item quantity
+- `DELETE /cart/{cart_item_id}` — remove a single cart item
+- `DELETE /cart` — clear the entire cart
 
 ---
 ## Installation and Setup
@@ -236,7 +236,7 @@ After the backend is running, open:
 http://127.0.0.1:8000/docs
 ```
 Then run:
-- POST /seed-products
+- `POST /seed-products`
 
 This inserts the sample cocktail product data into the database.
 
@@ -247,7 +247,7 @@ This inserts the sample cocktail product data into the database.
 3.	Adjust the Flavor Matrix sliders to filter products.
 4.	Click Add to cart on any product.
 5.	The right-side cart drawer opens automatically.
-6.	Increase or decrease quantity using + and -.
+6.	Increase or decrease quantity using `+` and `-`.
 7.	Click Remove to delete one cart item completely.
 8.	Click Clear cart to remove all items from the cart.
 9.	Review subtotal and explore recommended products in the drawer.
@@ -272,7 +272,7 @@ The design combines:
 
 One challenge was connecting the React frontend, FastAPI backend, and MySQL database correctly. This required setting up the Python virtual environment, configuring the database connection, and testing API endpoints independently before frontend integration.
 
-Another challenge was ensuring that product images displayed consistently. Since external placeholder images were unreliable, local product images were stored inside the frontend public/images folder and referenced through database image paths.
+Another challenge was ensuring that product images displayed consistently. Since external placeholder images were unreliable, local product images were stored inside the frontend `public/images` folder and referenced through database image paths.
 
 A further challenge was making the layout responsive while keeping the visual style consistent. This was solved through CSS grid breakpoints, allowing the product collection to adapt from four columns on desktop to two columns on mobile.
 
