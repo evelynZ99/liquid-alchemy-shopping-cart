@@ -116,3 +116,172 @@ ecommerce-shopping-cart/
 │   └── schema.sql
 │
 └── README.md
+
+
+⸻
+
+Folder Explanation
+
+frontend/
+
+Contains the React application, page layout, UI styling, and API request logic.
+
+backend/
+
+Contains the FastAPI server, database connection, SQLModel models, and API endpoints.
+
+frontend/public/images/
+
+Stores all local product images used in the landing page and cart drawer.
+
+database/
+
+Contains documentation and SQL reference files for the database structure.
+
+⸻
+
+Database Structure
+
+This project uses a MySQL database named:
+	•	ecommerce_cart_db
+
+Main tables:
+	•	product
+	•	cartitem
+
+product
+
+Stores cocktail and product data shown on the landing page.
+
+Fields:
+	•	id
+	•	name
+	•	description
+	•	price
+	•	image_url
+	•	category
+	•	stock
+
+cartitem
+
+Stores products added to the shopping cart.
+
+Fields:
+	•	id
+	•	product_id
+	•	quantity
+
+⸻
+
+API Endpoints
+
+Product Endpoints
+	•	GET /products — get all products
+	•	POST /seed-products — insert sample product data
+
+Cart Endpoints
+	•	GET /cart — get all cart items
+	•	POST /cart — add a product to cart
+	•	PUT /cart/{cart_item_id} — update cart item quantity
+	•	DELETE /cart/{cart_item_id} — remove a single cart item
+	•	DELETE /cart — clear the entire cart
+
+⸻
+Installation and Setup
+
+1. Clone the repository
+git clone https://github.com/evelynZ99/liquid-alchemy-shopping-cart
+cd ecommerce-shopping-cart
+
+2. Start the backend
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+
+3. Start the frontend
+Open a new terminal:
+cd frontend
+npm install
+npm run dev
+
+4. Configure MySQL
+
+Create a MySQL database:
+CREATE DATABASE ecommerce_cart_db;
+
+Create a .env file inside backend/:
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=ecommerce_cart_db
+
+5. Seed sample products
+
+After the backend is running, open:
+http://127.0.0.1:8000/docs
+
+Then run:
+	•	POST /seed-products
+
+This inserts the sample cocktail product data into the database.
+
+⸻
+
+How to Use
+	1.	Open the landing page in the browser.
+	2.	Browse the cocktail collection.
+	3.	Adjust the Flavor Matrix sliders to filter products.
+	4.	Click Add to cart on any product.
+	5.	The right-side cart drawer opens automatically.
+	6.	Increase or decrease quantity using + and -.
+	7.	Click Remove to delete one cart item completely.
+	8.	Click Clear cart to remove all items from the cart.
+	9.	Review subtotal and explore recommended products in the drawer.
+
+⸻
+Design Direction
+
+The interface was inspired by:
+	•	premium minimalist product websites
+	•	cocktail menu editorial layouts
+	•	experimental visual storytelling
+
+The design combines:
+	•	neutral background tones
+	•	serif display typography
+	•	restrained industrial color accents
+	•	structured product cards
+	•	a cart drawer interaction instead of a full separate cart page
+
+⸻
+
+Challenges and Solutions
+
+One challenge was connecting the React frontend, FastAPI backend, and MySQL database correctly. This required setting up the Python virtual environment, configuring the database connection, and testing API endpoints independently before frontend integration.
+
+Another challenge was ensuring that product images displayed consistently. Since external placeholder images were unreliable, local product images were stored inside the frontend public/images folder and referenced through database image paths.
+
+A further challenge was making the layout responsive while keeping the visual style consistent. This was solved through CSS grid breakpoints, allowing the product collection to adapt from four columns on desktop to two columns on mobile.
+
+The cart drawer also required careful UI logic so that it could open after adding items, support quantity updates, remove individual products, and clear the entire cart smoothly.
+
+⸻
+
+Future Improvements
+	•	Add category tabs or a more advanced filter system
+	•	Add stock validation to prevent over-ordering
+	•	Add toast notifications for cart actions
+	•	Add search functionality
+	•	Add product detail popups
+	•	Add checkout simulation
+	•	Improve recommendation logic based on flavour pairing
+
+⸻
+
+Author
+	•	Name: Evelyn Zhou
+	•	Subject: Internet Programming
+	•	Assignment: Dynamic Web Interface to a Database System
