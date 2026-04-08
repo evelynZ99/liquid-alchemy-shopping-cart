@@ -144,48 +144,48 @@ Contains documentation and SQL reference files for the database structure.
 ## Database Structure
 
 This project uses a MySQL database named:
-	•	ecommerce_cart_db
+- ecommerce_cart_db
 
 Main tables:
-	•	product
-	•	cartitem
+- product
+- cartitem
 
 product
 
 Stores cocktail and product data shown on the landing page.
 
 Fields:
-	•	id
-	•	name
-	•	description
-	•	price
-	•	image_url
-	•	category
-	•	stock
+- id
+- name
+- description
+- price
+- image_url
+- category
+- stock
 
 cartitem
 
 Stores products added to the shopping cart.
 
 Fields:
-	•	id
-	•	product_id
-	•	quantity
+- id
+- product_id
+- quantity
 
 ---
 
 ## API Endpoints
 
 Product Endpoints
-	•	GET /products — get all products
-	•	POST /seed-products — insert sample product data
+- GET /products — get all products
+- POST /seed-products — insert sample product data
 
 Cart Endpoints
-	•	GET /cart — get all cart items
-	•	POST /cart — add a product to cart
-	•	PUT /cart/{cart_item_id} — update cart item quantity
-	•	DELETE /cart/{cart_item_id} — remove a single cart item
-	•	DELETE /cart — clear the entire cart
+- GET /cart — get all cart items
+- POST /cart — add a product to cart
+- PUT /cart/{cart_item_id} — update cart item quantity
+- DELETE /cart/{cart_item_id} — remove a single cart item
+- DELETE /cart — clear the entire cart
 
 ---
 ## Installation and Setup
@@ -232,39 +232,40 @@ DB_NAME=ecommerce_cart_db
 5. Seed sample products
 
 After the backend is running, open:
+```text
 http://127.0.0.1:8000/docs
-
+```
 Then run:
-	•	POST /seed-products
+- POST /seed-products
 
 This inserts the sample cocktail product data into the database.
 
 ---
 ## How to Use
-	1.	Open the landing page in the browser.
-	2.	Browse the cocktail collection.
-	3.	Adjust the Flavor Matrix sliders to filter products.
-	4.	Click Add to cart on any product.
-	5.	The right-side cart drawer opens automatically.
-	6.	Increase or decrease quantity using + and -.
-	7.	Click Remove to delete one cart item completely.
-	8.	Click Clear cart to remove all items from the cart.
-	9.	Review subtotal and explore recommended products in the drawer.
+1.	Open the landing page in the browser.
+2.	Browse the cocktail collection.
+3.	Adjust the Flavor Matrix sliders to filter products.
+4.	Click Add to cart on any product.
+5.	The right-side cart drawer opens automatically.
+6.	Increase or decrease quantity using + and -.
+7.	Click Remove to delete one cart item completely.
+8.	Click Clear cart to remove all items from the cart.
+9.	Review subtotal and explore recommended products in the drawer.
 	
 ---
 ## Design Direction
 
 The interface was inspired by:
-	•	premium minimalist product websites
-	•	cocktail menu editorial layouts
-	•	experimental visual storytelling
+- premium minimalist product websites
+- cocktail menu editorial layouts
+- experimental visual storytelling
 
 The design combines:
-	•	neutral background tones
-	•	serif display typography
-	•	restrained industrial color accents
-	•	structured product cards
-	•	a cart drawer interaction instead of a full separate cart page
+- neutral background tones
+- serif display typography
+- restrained industrial color accents
+- structured product cards
+- a cart drawer interaction instead of a full separate cart page
 
 ---
 ## Challenges and Solutions
@@ -279,16 +280,16 @@ The cart drawer also required careful UI logic so that it could open after addin
 
 ---
 ## Future Improvements
-	•	Add category tabs or a more advanced filter system
-	•	Add stock validation to prevent over-ordering
-	•	Add toast notifications for cart actions
-	•	Add search functionality
-	•	Add product detail popups
-	•	Add checkout simulation
-	•	Improve recommendation logic based on flavour pairing
+- Add category tabs or a more advanced filter system
+- Add stock validation to prevent over-ordering
+- Add toast notifications for cart actions
+- Add search functionality
+- Add product detail popups
+- Add checkout simulation
+- Improve recommendation logic based on flavour pairing
 
 ---
 ## Author
-	•	Name: Evelyn Zhou
-	•	Subject: Internet Programming
-	•	Assignment: Dynamic Web Interface to a Database System
+- Name: Evelyn Zhou
+- Subject: Internet Programming
+- Assignment: Dynamic Web Interface to a Database System
