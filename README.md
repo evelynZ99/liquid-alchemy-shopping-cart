@@ -117,10 +117,11 @@ ecommerce-shopping-cart/
 │
 └── README.md
 
+```
 
-⸻
+---
 
-Folder Explanation
+## Folder Explanation
 
 frontend/
 
@@ -138,9 +139,9 @@ database/
 
 Contains documentation and SQL reference files for the database structure.
 
-⸻
+---
 
-Database Structure
+## Database Structure
 
 This project uses a MySQL database named:
 	•	ecommerce_cart_db
@@ -171,9 +172,9 @@ Fields:
 	•	product_id
 	•	quantity
 
-⸻
+---
 
-API Endpoints
+## API Endpoints
 
 Product Endpoints
 	•	GET /products — get all products
@@ -186,37 +187,47 @@ Cart Endpoints
 	•	DELETE /cart/{cart_item_id} — remove a single cart item
 	•	DELETE /cart — clear the entire cart
 
-⸻
-Installation and Setup
+---
+## Installation and Setup
 
 1. Clone the repository
+```text
 git clone https://github.com/evelynZ99/liquid-alchemy-shopping-cart
 cd ecommerce-shopping-cart
+```
 
 2. Start the backend
+```text
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload
+```
 
 3. Start the frontend
 Open a new terminal:
+```text
 cd frontend
 npm install
 npm run dev
+```
 
 4. Configure MySQL
 
 Create a MySQL database:
+```text 
 CREATE DATABASE ecommerce_cart_db;
+```
 
 Create a .env file inside backend/:
+```text
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=ecommerce_cart_db
+```
 
 5. Seed sample products
 
@@ -228,9 +239,8 @@ Then run:
 
 This inserts the sample cocktail product data into the database.
 
-⸻
-
-How to Use
+---
+## How to Use
 	1.	Open the landing page in the browser.
 	2.	Browse the cocktail collection.
 	3.	Adjust the Flavor Matrix sliders to filter products.
@@ -240,9 +250,9 @@ How to Use
 	7.	Click Remove to delete one cart item completely.
 	8.	Click Clear cart to remove all items from the cart.
 	9.	Review subtotal and explore recommended products in the drawer.
-
-⸻
-Design Direction
+	
+---
+## Design Direction
 
 The interface was inspired by:
 	•	premium minimalist product websites
@@ -256,9 +266,8 @@ The design combines:
 	•	structured product cards
 	•	a cart drawer interaction instead of a full separate cart page
 
-⸻
-
-Challenges and Solutions
+---
+## Challenges and Solutions
 
 One challenge was connecting the React frontend, FastAPI backend, and MySQL database correctly. This required setting up the Python virtual environment, configuring the database connection, and testing API endpoints independently before frontend integration.
 
@@ -268,9 +277,8 @@ A further challenge was making the layout responsive while keeping the visual st
 
 The cart drawer also required careful UI logic so that it could open after adding items, support quantity updates, remove individual products, and clear the entire cart smoothly.
 
-⸻
-
-Future Improvements
+---
+## Future Improvements
 	•	Add category tabs or a more advanced filter system
 	•	Add stock validation to prevent over-ordering
 	•	Add toast notifications for cart actions
@@ -279,9 +287,8 @@ Future Improvements
 	•	Add checkout simulation
 	•	Improve recommendation logic based on flavour pairing
 
-⸻
-
-Author
+---
+## Author
 	•	Name: Evelyn Zhou
 	•	Subject: Internet Programming
 	•	Assignment: Dynamic Web Interface to a Database System
