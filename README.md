@@ -134,14 +134,14 @@ cd ecommerce-shopping-cart
 ### 2. Database Setup
 
 Create the tables:
-\```text
+```text
 mysql -u root -p < database/schema.sql
-\```
+```
 
 Import sample product data:
-\```text
+```text
 mysql -u root -p ecommerce_cart_db < database/seed_data.sql
-\```
+```
 
 ### 3. Backend Setup
 ```text
