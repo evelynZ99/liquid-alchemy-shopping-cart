@@ -1,35 +1,27 @@
-# Liquid Alchemy — Cocktail E-commerce Shopping Cart
+# 🍸 Liquid Alchemy — Cocktail E-commerce Platform
 
-A single-page e-commerce web application inspired by premium editorial product pages and experimental cocktail menus.  
-The project allows users to browse a curated cocktail collection, explore flavour profiles, add products to a shopping cart, update quantities, remove individual items, and clear the entire cart through a database-connected interface.
+A full-stack cocktail e-commerce platform built with React, FastAPI, and MySQL.  
+The project allows users to browse a curated cocktail collection, explore flavour profiles, manage a shopping cart, and complete a checkout flow.
 
 ---
 
 ## Project Overview
 
-This project reinterprets the classic shopping cart assignment as a cocktail-focused landing page.  
-Instead of a standard retail interface, it combines a minimalist industrial visual style with a more experimental product storytelling approach.
+This project reinterprets the classic shopping cart assignment as a cocktail-focused e-commerce platform.  
+Instead of a standard retail interface, it combines a minimalist industrial visual style with an experimental product storytelling approach.
 
 The website includes:
 
-- a hero section
-- a flavour matrix filter
-- a responsive product collection grid
-- a right-side cart drawer
-- upsell recommendations
-- dynamic CRUD operations connected to a MySQL database
-
----
-
-## Problem Statement
-
-Traditional shopping cart demos often focus only on functionality.  
-This project aims to demonstrate both:
-
-1. **dynamic full-stack CRUD functionality**
-2. **a more refined branded user experience**
-
-Users can browse cocktail products, filter them visually by flavour characteristics, and manage cart items in real time without reloading the page.
+- Age verification gate
+- Hero section with branded editorial styling
+- Flavour matrix filter
+- Responsive product collection grid
+- Cart drawer with upsell recommendations
+- Wishlist management
+- User authentication
+- Checkout and payment flow
+- User account and order history
+- Dynamic CRUD operations connected to a MySQL database
 
 ---
 
@@ -55,44 +47,21 @@ Users can browse cocktail products, filter them visually by flavour characterist
 
 ---
 
-## Main Features
-
-- Single-page application style interface
-- Responsive landing page layout
-- Hero section with branded editorial styling
-- Flavour Matrix filter using sliders
-- Product collection grid with responsive layout
-- Local product images stored in `frontend/public/images`
-- Add products to cart
-- Automatically open cart drawer after add-to-cart
-- Update cart item quantity
-- Remove an individual cart item
-- Clear the entire shopping cart
-- Dynamic cart subtotal calculation
-- Upsell recommendation section inside cart drawer
-- Database-driven product and cart data
-
----
-
-## Responsive Design
-
-The layout is responsive across different screen sizes:
-
-- **Large screens:** 4 products per row
-- **Medium screens:** 3 products per row
-- **Mobile screens:** 2 products per row
-
-The cart drawer also adapts for smaller screens and expands to full width on mobile.
-
----
-
 ## Project Structure
 
 ```text
 ecommerce-shopping-cart/
 ├── backend/
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   ├── products.py
+│   │   ├── cart.py
+│   │   ├── users.py
+│   │   ├── orders.py
+│   │   └── wishlist.py
 │   ├── .venv/
-│   ├── .env
+│   ├── .env              ← create this yourself (see below)
+│   ├── .env.example      ← reference for required variables
 │   ├── db.py
 │   ├── main.py
 │   ├── models.py
@@ -101,126 +70,81 @@ ecommerce-shopping-cart/
 ├── frontend/
 │   ├── public/
 │   │   └── images/
-│   ├── src/
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   ├── App.jsx
-│   │   ├── App.css
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── package.json
-│   └── vite.config.js
+│   └── src/
+│       ├── components/
+│       │   ├── Navbar.jsx
+│       │   ├── Footer.jsx
+│       │   ├── ProductCard.jsx
+│       │   └── AgeVerificationModal.jsx
+│       ├── pages/
+│       │   ├── Home.jsx
+│       │   ├── ProductListing.jsx
+│       │   ├── ProductDetail.jsx
+│       │   ├── Login.jsx
+│       │   ├── Signup.jsx
+│       │   ├── Cart.jsx
+│       │   ├── Checkout.jsx
+│       │   ├── PaymentSuccess.jsx
+│       │   ├── Wishlist.jsx
+│       │   ├── Account.jsx
+│       │   └── NotFound.jsx
+│       ├── services/
+│       │   └── api.js
+│       ├── App.jsx
+│       ├── App.css
+│       ├── index.css
+│       └── main.jsx
 │
 ├── database/
 │   ├── database_notes.md
 │   └── schema.sql
 │
 └── README.md
-
 ```
 
 ---
 
-## Folder Explanation
+## Page Ownership
 
-`frontend/`
-
-Contains the React application, page layout, UI styling, and API request logic.
-
-`backend/`
-
-Contains the FastAPI server, database connection, SQLModel models, and API endpoints.
-
-`frontend/public/images/`
-
-Stores all local product images used in the landing page and cart drawer.
-
-`database/`
-
-Contains documentation and SQL reference files for the database structure.
+| Page | File | Owner |
+|------|------|-------|
+| Landing Page | pages/Home.jsx | Evelyn |
+| Product Listing | pages/ProductListing.jsx | Evelyn |
+| Login / Signup | pages/Login.jsx, pages/Signup.jsx | 成员 A |
+| Cart / Checkout / Payment | pages/Cart.jsx, pages/Checkout.jsx, pages/PaymentSuccess.jsx | 成员 B |
+| Wishlist / Account | pages/Wishlist.jsx, pages/Account.jsx | 成员 C |
 
 ---
 
-## Database Structure
+## Getting Started
 
-This project uses a MySQL database named:
-- `ecommerce_cart_db`
-
-Main tables:
-- `product`
-- `cartitem`
-
-product
-
-Stores cocktail and product data shown on the landing page.
-
-Fields:
-- `id`
-- `name`
-- `description`
-- `price`
-- `image_url`
-- `category`
-- `stock`
-
-cartitem
-
-Stores products added to the shopping cart.
-
-Fields:
-- `id`
-- `product_id`
-- `quantity`
+### Prerequisites
+- Node.js
+- Python 3.x
+- MySQL
 
 ---
 
-## API Endpoints
-
-Product Endpoints
-- `GET /products` — get all products
-- `POST /seed-products` — insert sample product data
-
-Cart Endpoints
-- `GET /cart` — get all cart items
-- `POST /cart` — add a product to cart
-- `PUT /cart/{cart_item_id}` — update cart item quantity
-- `DELETE /cart/{cart_item_id}` — remove a single cart item
-- `DELETE /cart` — clear the entire cart
-
----
-## Installation and Setup
-
-1. Clone the repository
+### 1. Clone the Repository
 ```text
 git clone https://github.com/evelynZ99/liquid-alchemy-shopping-cart
 cd ecommerce-shopping-cart
 ```
 
-2. Start the backend
+### 2. Database Setup
+```text
+mysql -u root -p < database/schema.sql
+```
+
+### 3. Backend Setup
 ```text
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload
 ```
 
-3. Start the frontend
-Open a new terminal:
-```text
-cd frontend
-npm install
-npm run dev
-```
-
-4. Configure MySQL
-
-Create a MySQL database:
-```text 
-CREATE DATABASE ecommerce_cart_db;
-```
-
-Create a .env file inside backend/:
+Create your `.env` file inside `backend/`:
 ```text
 DB_HOST=localhost
 DB_PORT=3306
@@ -229,66 +153,129 @@ DB_PASSWORD=your_mysql_password
 DB_NAME=ecommerce_cart_db
 ```
 
-5. Seed sample products
-
-After the backend is running, open:
+Run the backend:
 ```text
-http://127.0.0.1:8000/docs
+uvicorn main:app --reload
 ```
+
+Backend will run at: http://127.0.0.1:8000
+
+### 4. Frontend Setup
+Open a new terminal:
+```text
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend will run at: http://localhost:5173
+
+### 5. Seed Sample Products
+
+After the backend is running, open:  
+http://127.0.0.1:8000/docs
+
 Then run:
-- `POST /seed-products`
-
-This inserts the sample cocktail product data into the database.
+- POST /products/seed
 
 ---
-## How to Use
-1.	Open the landing page in the browser.
-2.	Browse the cocktail collection.
-3.	Adjust the Flavor Matrix sliders to filter products.
-4.	Click Add to cart on any product.
-5.	The right-side cart drawer opens automatically.
-6.	Increase or decrease quantity using `+` and `-`.
-7.	Click Remove to delete one cart item completely.
-8.	Click Clear cart to remove all items from the cart.
-9.	Review subtotal and explore recommended products in the drawer.
-	
+
+## API Endpoints
+
+### Products
+- `GET /products/` — Get all products
+- `GET /products/{id}` — Get product by ID
+- `POST /products/seed` — Seed sample products
+
+### Cart
+- `GET /cart/` — Get cart items
+- `POST /cart/` — Add item to cart
+- `PUT /cart/{id}` — Update item quantity
+- `DELETE /cart/{id}` — Remove item
+- `DELETE /cart/` — Clear cart
+
+### Users *(TODO — 成员 A)*
+- `POST /users/register`
+- `POST /users/login`
+- `GET /users/{id}`
+
+### Wishlist *(TODO — 成员 C)*
+- `GET /wishlist/{user_id}`
+- `POST /wishlist/`
+- `DELETE /wishlist/{id}`
+
+### Orders *(TODO — 成员 B)*
+- `POST /orders/`
+- `GET /orders/{id}`
+- `GET /orders/user/{user_id}`
+
 ---
+
+## Database Structure
+
+Database name: `ecommerce_cart_db`
+
+| Table | Description |
+|-------|-------------|
+| users | User accounts |
+| products | Cocktail and product data |
+| cart_items | Products added to cart |
+| wishlist_items | Products saved to wishlist |
+| orders | Order records |
+| order_items | Individual items within each order |
+
+---
+
+## Git Workflow
+
+1. Never commit directly to `main`
+2. Always branch from `dev`
+```text
+git checkout dev
+git pull
+git checkout -b feature/your-feature-name
+```
+3. When done, push and open a Pull Request to `dev`
+```text
+git push origin feature/your-feature-name
+```
+4. Wait for code review before merging
+
+---
+
+## Main Features
+
+- Age verification gate
+- Single-page application style interface
+- Responsive landing page layout
+- Flavour Matrix filter using sliders
+- Product collection grid with responsive layout
+- Add products to cart
+- Update cart item quantity
+- Remove individual cart item
+- Clear entire cart
+- Dynamic cart subtotal calculation
+- Upsell recommendation section inside cart drawer
+
+---
+
+## Responsive Design
+
+- **Large screens:** 4 products per row
+- **Medium screens:** 3 products per row
+- **Mobile screens:** 2 products per row
+
+---
+
 ## Design Direction
 
 The interface was inspired by:
-- premium minimalist product websites
-- cocktail menu editorial layouts
-- experimental visual storytelling
-
-The design combines:
-- neutral background tones
-- serif display typography
-- restrained industrial color accents
-- structured product cards
-- a cart drawer interaction instead of a full separate cart page
+- Premium minimalist product websites
+- Cocktail menu editorial layouts
+- Experimental visual storytelling
 
 ---
-## Challenges and Solutions
 
-One challenge was connecting the React frontend, FastAPI backend, and MySQL database correctly. This required setting up the Python virtual environment, configuring the database connection, and testing API endpoints independently before frontend integration.
-
-Another challenge was ensuring that product images displayed consistently. Since external placeholder images were unreliable, local product images were stored inside the frontend `public/images` folder and referenced through database image paths.
-
-A further challenge was making the layout responsive while keeping the visual style consistent. This was solved through CSS grid breakpoints, allowing the product collection to adapt from four columns on desktop to two columns on mobile.
-
-The cart drawer also required careful UI logic so that it could open after adding items, support quantity updates, remove individual products, and clear the entire cart smoothly.
-
----
-## Future Improvements
-- Add category tabs or a more advanced filter system
-- Add stock validation to prevent over-ordering
-- Add toast notifications for cart actions
-- Add search functionality
-- Add product detail popups
-- Add checkout simulation
-- Improve recommendation logic based on flavour pairing
-
----
 ## Author
 - Name: Evelyn Zhou
 - Subject: Internet Programming
