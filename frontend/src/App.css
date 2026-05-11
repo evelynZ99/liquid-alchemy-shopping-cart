@@ -899,7 +899,6 @@ button {
 }
 
 .auth-text-button,
-.auth-mode-switch,
 .auth-footer-button {
   border: none;
   background: transparent;
@@ -913,26 +912,16 @@ button {
   letter-spacing: 3px;
 }
 
-.auth-mode-switch {
-  padding: 12px 0 0;
-  text-align: center;
-  font-size: 12px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
 
-.auth-mode-switch:hover:not(:disabled),
+
 .auth-text-button:hover:not(:disabled),
 .auth-footer-button:hover:not(:disabled) {
   color: var(--dark);
 }
 
-.auth-mode-switch:hover:not(:disabled) {
-  text-decoration: underline;
-  text-underline-offset: 5px;
-}
 
-.auth-mode-switch:active:not(:disabled),
+
+
 .auth-text-button:active:not(:disabled),
 .auth-footer-button:active:not(:disabled) {
   transform: translateY(2px) scale(0.98);
@@ -1031,7 +1020,7 @@ button {
 .auth-secondary-link:focus-visible,
 .auth-secondary-button:focus-visible,
 .auth-footer-button:focus-visible,
-.auth-mode-switch:focus-visible {
+:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
@@ -1162,6 +1151,7 @@ button {
 }
 
 .account-icon-link {
+  cursor: pointer;
   width: 38px;
   height: 38px;
   border: 1px solid var(--line);
@@ -2057,4 +2047,144 @@ button {
   .account-profile-card { padding: 24px; }
   .account-profile-image { min-height: 150px; }
   .account-detail-item strong { font-size: 18px; }
+}
+/* ==================== Register Modal ==================== */
+
+.auth-secondary-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-secondary-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.auth-success {
+  border: 1px solid #b8c7a9;
+  background: #edf3e8;
+  color: #516c3f;
+  padding: 13px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.auth-created-note {
+  margin-top: 34px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.register-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at center, rgba(246, 245, 241, 0.36), rgba(246, 245, 241, 0.72)),
+    rgba(246, 245, 241, 0.58);
+  backdrop-filter: blur(7px);
+}
+
+.register-modal-card {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+  background: rgba(251, 250, 246, 0.95);
+  border: 1px solid var(--line);
+  box-shadow: 0 28px 90px rgba(31, 30, 28, 0.16);
+  padding: 44px 48px;
+  animation: registerModalIn 0.28s ease both;
+}
+
+@keyframes registerModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.register-brand {
+  margin-bottom: 18px;
+}
+
+.register-brand-line {
+  width: 96px;
+  height: 1px;
+  background: var(--accent);
+  margin: 0 auto 38px;
+  opacity: 0.6;
+}
+
+.register-modal-content {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.register-modal-content h1 {
+  font-family: "Times New Roman", serif;
+  font-size: 42px;
+  font-style: italic;
+  line-height: 1.15;
+  font-weight: 500;
+  margin: 0 0 20px;
+}
+
+.register-description {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+
+.register-form {
+  display: grid;
+  gap: 22px;
+}
+
+.register-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 680px) {
+  .register-overlay {
+    padding: 18px;
+  }
+
+  .register-modal-card {
+    padding: 34px 24px;
+  }
+
+  .register-modal-content h1 {
+    font-size: 32px;
+  }
+
+  .register-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.account-notice.success {
+  border: 1px solid #b8c7a9;
+  background: #edf3e8;
+  color: #516c3f;
+}
+
+.account-notice.error {
+  border: 1px solid #d8b5ab;
+  background: #f3ddd7;
+  color: #9c3d2b;
 }

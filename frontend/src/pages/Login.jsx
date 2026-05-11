@@ -1,41 +1,35 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AgeVerificationModal from "../components/AgeVerificationModal";
 import { login as loginUser, register as registerUser } from "../services/api";
 
-const emptyRegisterForm = {
-  username: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-};
-
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // 年龄验证状态
   const [ageStatus, setAgeStatus] = useState(() => {
     return localStorage.getItem("liquidAlchemyAgeVerified") === "true"
       ? "verified"
       : "pending";
   });
 
-  // false = 普通用户登录；true = 管理员登录
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
   });
 
-  const [registerForm, setRegisterForm] = useState(emptyRegisterForm);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [accountCreated, setAccountCreated] = useState(false);
+  const [registerForm, setRegisterForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   const [error, setError] = useState("");
   const [registerError, setRegisterError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
@@ -44,12 +38,6 @@ const Login = () => {
   function handleApproveAge() {
     localStorage.setItem("liquidAlchemyAgeVerified", "true");
     setAgeStatus("verified");
-
-    // 如果用户原本只是想进入普通浏览页，年龄验证后直接回去
-    const from = location.state?.from;
-    if (from && from !== "/login" && from !== "/account" && !from.startsWith("/admin")) {
-      navigate(from, { replace: true });
-    }
   }
 
   function handleRejectAge() {
@@ -57,10 +45,12 @@ const Login = () => {
     setAgeStatus("rejected");
   }
 
-  function handleChange(event) {
+  function handleLoginChange(event) {
     const { name, value } = event.target;
 
-    setFormData((prev) => ({
+    setError("");
+
+    setLoginForm((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -75,33 +65,58 @@ const Login = () => {
     }));
   }
 
-  function handleModeSwitch() {
+  async function handleLoginSubmit(event) {
+    event.preventDefault();
     setError("");
-    setSuccessMessage("");
-    setIsAdminMode((prev) => !prev);
-  }
 
-  function openRegisterModal() {
-    setRegisterError("");
-    setShowRegisterModal(true);
-  }
+    if (!loginForm.email.trim() || !loginForm.password.trim()) {
+      setError("Please enter both email address and password.");
+      return;
+    }
 
-  function closeRegisterModal() {
-    if (isCreatingAccount) return;
-    setShowRegisterModal(false);
-    setRegisterError("");
+    if (!EMAIL_PATTERN.test(loginForm.email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const user = await loginUser(loginForm.email.trim(), loginForm.password);
+
+      const currentUser = {
+        ...user,
+        role: user.is_admin ? "admin" : "customer",
+        loginMethod: user.is_admin ? "database-admin" : "database-customer",
+      };
+
+      localStorage.setItem(
+        "liquidAlchemyCurrentUser",
+        JSON.stringify(currentUser)
+      );
+
+      setIsSubmitting(false);
+
+      if (user.is_admin) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    } catch (err) {
+      setIsSubmitting(false);
+      setError("Invalid email or password.");
+    }
   }
 
   async function handleCreateAccount(event) {
     event.preventDefault();
     setRegisterError("");
-    setSuccessMessage("");
 
     if (
       !registerForm.username.trim() ||
       !registerForm.email.trim() ||
-      !registerForm.password.trim() ||
-      !registerForm.confirmPassword.trim()
+      !registerForm.password ||
+      !registerForm.confirmPassword
     ) {
       setRegisterError("Please complete all fields.");
       return;
@@ -112,8 +127,13 @@ const Login = () => {
       return;
     }
 
+    if (registerForm.password.length < 6) {
+      setRegisterError("Password must be at least 6 characters.");
+      return;
+    }
+
     if (registerForm.password !== registerForm.confirmPassword) {
-      setRegisterError("Password and confirmation do not match.");
+      setRegisterError("Passwords do not match.");
       return;
     }
 
@@ -126,98 +146,69 @@ const Login = () => {
         registerForm.password
       );
 
-      setFormData({
+      setIsCreatingAccount(false);
+      setAccountCreated(true);
+      setShowRegisterModal(false);
+
+      setLoginForm({
         email: registerForm.email.trim(),
         password: "",
       });
 
-      setRegisterForm(emptyRegisterForm);
-      setAccountCreated(true);
-      setShowRegisterModal(false);
-      setSuccessMessage("Account created successfully. Please sign in with your new account.");
+      setRegisterForm({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
     } catch (err) {
-      setRegisterError("Failed to create account. The email may already be registered.");
-    } finally {
       setIsCreatingAccount(false);
-    }
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-    setSuccessMessage("");
-
-    if (!formData.email.trim() || !formData.password.trim()) {
-      setError("Please enter both email address and password.");
-      return;
-    }
-
-    if (!formData.email.includes("@")) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      const user = await loginUser(formData.email.trim(), formData.password);
-
-      if (isAdminMode && !user.is_admin) {
-        setError("This account does not have staff access.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const currentUser = {
-        ...user,
-        role: user.is_admin ? "admin" : "customer",
-        ageVerified: true,
-        loginMethod: isAdminMode ? "database-admin" : "database-customer",
-      };
-
-      // 保存当前登录身份
-      localStorage.setItem("liquidAlchemyCurrentUser", JSON.stringify(currentUser));
-
-      // 登录成功后进入主页
-      navigate("/", { replace: true });
-    } catch (err) {
-      setError("Invalid email or password.");
-    } finally {
-      setIsSubmitting(false);
+      setRegisterError(
+        "Account creation failed. This email may already be registered."
+      );
     }
   }
 
   return (
     <main className="auth-page">
-      <section className={`auth-card login-card ${isAgeLocked || showRegisterModal ? "auth-blurred" : ""}`}>
+      <section
+        className={`auth-card login-card ${
+          isAgeLocked || showRegisterModal ? "auth-blurred" : ""
+        }`}
+      >
         <Link to="/" className="auth-brand auth-brand-link">
           Liquid Alchemy
         </Link>
 
         <div className="auth-header">
-          <p className="auth-kicker">
-            {isAdminMode ? "STAFF ACCESS" : "CUSTOMER ACCESS"}
-          </p>
+          <p className="auth-kicker">CUSTOMER ACCESS</p>
 
-          <h1>{isAdminMode ? "Staff Portal" : "Welcome Back"}</h1>
+          <h1>Welcome Back</h1>
 
           <p>
-            {isAdminMode
-              ? "Enter your staff credentials to access future management tools."
-              : "Enter your credentials to access your personal laboratory and cocktail archives."}
+            Enter your credentials to access your personal laboratory and
+            cocktail archives.
           </p>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form" onSubmit={handleLoginSubmit} noValidate>
           <div className="auth-field">
             <label htmlFor="email">EMAIL ADDRESS</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder={isAdminMode ? "staff@alchemy.com" : "name@alchemy.com"}
-              value={formData.email}
-              onChange={handleChange}
+              placeholder="name@alchemy.com"
+              value={loginForm.email}
+              onChange={handleLoginChange}
+              onBlur={() => {
+                if (
+                  loginForm.email.trim() &&
+                  !EMAIL_PATTERN.test(loginForm.email.trim())
+                ) {
+                  setError("Please enter a valid email address.");
+                }
+              }}
               autoComplete="email"
               disabled={isAgeLocked}
             />
@@ -231,7 +222,9 @@ const Login = () => {
                 type="button"
                 className="auth-text-button"
                 onClick={() =>
-                  setError("Password recovery is not available in this prototype yet.")
+                  setError(
+                    "Password recovery is not available in this prototype yet."
+                  )
                 }
                 disabled={isAgeLocked}
               >
@@ -244,50 +237,44 @@ const Login = () => {
               name="password"
               type="password"
               placeholder="••••••••"
-              value={formData.password}
-              onChange={handleChange}
+              value={loginForm.password}
+              onChange={handleLoginChange}
               autoComplete="current-password"
               disabled={isAgeLocked}
             />
           </div>
 
           {error && <div className="auth-error">{error}</div>}
-          {successMessage && <div className="auth-success">{successMessage}</div>}
+
+          {accountCreated && (
+            <div className="auth-success">
+              Account created successfully. Please sign in with your new
+              account.
+            </div>
+          )}
 
           <button
             type="submit"
             className="auth-button auth-primary-button"
             disabled={isSubmitting || isAgeLocked}
           >
-            {isSubmitting
-              ? isAdminMode
-                ? "SIGNING IN AS STAFF..."
-                : "SIGNING IN..."
-              : isAdminMode
-                ? "SIGN IN AS STAFF"
-                : "SIGN IN"}
-          </button>
-
-          <button
-            type="button"
-            className="auth-mode-switch"
-            onClick={handleModeSwitch}
-            disabled={isAgeLocked}
-          >
-            {isAdminMode ? "Customer sign in" : "Staff access"}
+            {isSubmitting ? "SIGNING IN..." : "SIGN IN"}
           </button>
         </form>
 
-        {!isAdminMode && !accountCreated && (
+        {!accountCreated && (
           <>
             <div className="auth-divider" />
 
-            <div className="auth-switch-area">
+            <div className="auth-switch">
               <p>New to the Laboratory?</p>
               <button
                 type="button"
                 className="auth-secondary-link auth-secondary-button"
-                onClick={openRegisterModal}
+                onClick={() => {
+                  setRegisterError("");
+                  setShowRegisterModal(true);
+                }}
                 disabled={isAgeLocked}
               >
                 CREATE AN ACCOUNT
@@ -296,13 +283,27 @@ const Login = () => {
           </>
         )}
 
+        {accountCreated && (
+          <div className="auth-created-note">
+            Your account is ready. Use the email above to sign in.
+          </div>
+        )}
+
         <div className="auth-footer">
           <span>© 2026 LIQUID ALCHEMY</span>
           <div>
-            <button type="button" className="auth-footer-button" disabled={isAgeLocked}>
+            <button
+              type="button"
+              className="auth-footer-button"
+              disabled={isAgeLocked}
+            >
               SUPPORT
             </button>
-            <button type="button" className="auth-footer-button" disabled={isAgeLocked}>
+            <button
+              type="button"
+              className="auth-footer-button"
+              disabled={isAgeLocked}
+            >
               PRIVACY
             </button>
           </div>
@@ -318,82 +319,99 @@ const Login = () => {
       )}
 
       {showRegisterModal && (
-        <div className="auth-register-overlay" role="dialog" aria-modal="true">
-          <section className="auth-register-card">
-            <button
-              type="button"
-              className="auth-register-close"
-              onClick={closeRegisterModal}
-              aria-label="Close create account modal"
-            >
-              ×
-            </button>
+        <div className="register-overlay" role="dialog" aria-modal="true">
+          <section className="register-modal-card">
+            <div className="auth-brand register-brand">Liquid Alchemy</div>
 
-            <p className="auth-kicker">CREATE ACCOUNT</p>
-            <h2>Join the Laboratory</h2>
-            <p className="auth-register-copy">
-              Create a customer account to save your cart, view order history, and manage profile details.
-            </p>
+            <div className="register-brand-line" />
 
-            <form className="auth-form" onSubmit={handleCreateAccount}>
-              <div className="auth-field">
-                <label htmlFor="register-username">ACCOUNT NAME</label>
-                <input
-                  id="register-username"
-                  name="username"
-                  type="text"
-                  value={registerForm.username}
-                  onChange={handleRegisterChange}
-                  placeholder="Alchemy Guest"
-                />
-              </div>
+            <div className="register-modal-content">
+              <p className="auth-kicker">NEW ACCOUNT</p>
+              <h1>Create an Account</h1>
+              <p className="register-description">
+                Create your profile to save account details, order history, and
+                future cocktail selections.
+              </p>
 
-              <div className="auth-field">
-                <label htmlFor="register-email">EMAIL ADDRESS</label>
-                <input
-                  id="register-email"
-                  name="email"
-                  type="email"
-                  value={registerForm.email}
-                  onChange={handleRegisterChange}
-                  placeholder="name@alchemy.com"
-                />
-              </div>
+              <form className="register-form" onSubmit={handleCreateAccount} noValidate>
+                <div className="auth-field">
+                  <label htmlFor="register-username">ACCOUNT NAME</label>
+                  <input
+                    id="register-username"
+                    name="username"
+                    type="text"
+                    placeholder="Alchemy Guest"
+                    value={registerForm.username}
+                    onChange={handleRegisterChange}
+                    autoComplete="username"
+                  />
+                </div>
 
-              <div className="auth-field">
-                <label htmlFor="register-password">PASSWORD</label>
-                <input
-                  id="register-password"
-                  name="password"
-                  type="password"
-                  value={registerForm.password}
-                  onChange={handleRegisterChange}
-                  placeholder="••••••••"
-                />
-              </div>
+                <div className="auth-field">
+                  <label htmlFor="register-email">EMAIL ADDRESS</label>
+                  <input
+                    id="register-email"
+                    name="email"
+                    type="email"
+                    placeholder="name@alchemy.com"
+                    value={registerForm.email}
+                    onChange={handleRegisterChange}
+                    autoComplete="email"
+                  />
+                </div>
 
-              <div className="auth-field">
-                <label htmlFor="register-confirm-password">CONFIRM PASSWORD</label>
-                <input
-                  id="register-confirm-password"
-                  name="confirmPassword"
-                  type="password"
-                  value={registerForm.confirmPassword}
-                  onChange={handleRegisterChange}
-                  placeholder="••••••••"
-                />
-              </div>
+                <div className="auth-field">
+                  <label htmlFor="register-password">PASSWORD</label>
+                  <input
+                    id="register-password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={registerForm.password}
+                    onChange={handleRegisterChange}
+                    autoComplete="new-password"
+                  />
+                </div>
 
-              {registerError && <div className="auth-error">{registerError}</div>}
+                <div className="auth-field">
+                  <label htmlFor="register-confirm-password">
+                    CONFIRM PASSWORD
+                  </label>
+                  <input
+                    id="register-confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={registerForm.confirmPassword}
+                    onChange={handleRegisterChange}
+                    autoComplete="new-password"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                className="auth-button auth-primary-button"
-                disabled={isCreatingAccount}
-              >
-                {isCreatingAccount ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
-              </button>
-            </form>
+                {registerError && (
+                  <div className="auth-error">{registerError}</div>
+                )}
+
+                <div className="register-actions">
+                  <button
+                    type="button"
+                    className="auth-button auth-outline-button"
+                    onClick={() => setShowRegisterModal(false)}
+                    disabled={isCreatingAccount}
+                  >
+                    CANCEL
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="auth-button auth-primary-button"
+                    disabled={isCreatingAccount}
+                  >
+                    {isCreatingAccount ? "CREATING..." : "CREATE ACCOUNT"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </section>
         </div>
       )}

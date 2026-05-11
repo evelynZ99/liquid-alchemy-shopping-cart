@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../App.css";
 import {
   fetchProducts,
@@ -9,9 +9,18 @@ import {
   deleteCartItem,
   clearCart,
 } from "../services/api";
-import { getCurrentUser } from "../utils/auth";
+
+function getStoredCurrentUser() {
+  try {
+    const savedUser = localStorage.getItem("liquidAlchemyCurrentUser");
+    return savedUser ? JSON.parse(savedUser) : null;
+  } catch {
+    return null;
+  }
+}
 
 const Home = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -20,8 +29,21 @@ const Home = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // 当前用户：未登录也可以浏览主页，但不能操作个人购物车
-  const currentUser = getCurrentUser();
+  const currentUser = getStoredCurrentUser();
   const userId = currentUser?.id;
+  function handleAccountEntry() {
+  if (!currentUser) {
+    navigate("/login");
+    return;
+  }
+
+  if (currentUser.is_admin || currentUser.role === "admin") {
+    navigate("/admin");
+    return;
+  }
+
+  navigate("/account");
+}
 
   const [filters, setFilters] = useState({
     sour: 50,
@@ -206,27 +228,33 @@ const Home = () => {
 
         <div className="header-actions">
           {/* Account / Profile 入口 */}
-          <Link
-            to="/account"
-            className="account-icon-link"
-            aria-label="Open account page"
-          >
-            <span className="account-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                <path
-                  d="M12 12c2.35 0 4.25-1.9 4.25-4.25S14.35 3.5 12 3.5 7.75 5.4 7.75 7.75 9.65 12 12 12Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M4.75 20.25c.65-3.45 3.52-5.75 7.25-5.75s6.6 2.3 7.25 5.75"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-          </Link>
+          <button
+  type="button"
+  className="account-icon-link"
+  aria-label="Open account page"
+  onClick={handleAccountEntry}
+>
+  <span className="account-icon">
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 12c2.35 0 4.25-1.9 4.25-4.25S14.35 3.5 12 3.5 7.75 5.4 7.75 7.75 9.65 12 12 12Z"
+        fill="currentColor"
+      />
+      <path
+        d="M4.75 20.25c.65-3.45 3.52-5.75 7.25-5.75s6.6 2.3 7.25 5.75"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  </span>
+</button>
 
           {/* 购物车入口 */}
           <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>

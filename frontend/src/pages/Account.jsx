@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchUser, fetchUserOrders } from "../services/api";
+import { fetchUser, fetchUserOrders, updatePassword } from "../services/api";
 
 const Account = () => {
   const navigate = useNavigate();
 
-  // 当前打开的面板
   const [activePanel, setActivePanel] = useState("profile");
-
-  // 是否显示登出弹窗
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+
+  const [userDetail, setUserDetail] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [error, setError] = useState("");
 
   const [settings, setSettings] = useState({
     twoFactor: true,
@@ -24,12 +27,7 @@ const Account = () => {
   });
 
   const [notice, setNotice] = useState("");
-  const [profile, setProfile] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [accountError, setAccountError] = useState("");
 
-  // 从 localStorage 读取当前登录用户
   const currentUser = useMemo(() => {
     try {
       const savedUser = localStorage.getItem("liquidAlchemyCurrentUser");
@@ -39,27 +37,40 @@ const Account = () => {
     }
   }, []);
 
+  const userId = currentUser?.id;
+
   useEffect(() => {
+    if (!userId) {
+      navigate("/login");
+      return;
+    }
+
     let isMounted = true;
 
     async function loadAccountData() {
-      if (!currentUser?.id) return;
-
       try {
-        const freshProfile = await fetchUser(currentUser.id);
-        if (isMounted) setProfile(freshProfile);
-      } catch {
-        if (isMounted) setProfile(currentUser);
-      }
-
-      try {
+        setError("");
+        setLoadingUser(true);
         setLoadingOrders(true);
-        const orderData = await fetchUserOrders(currentUser.id);
-        if (isMounted) setOrders(orderData);
-      } catch {
-        if (isMounted) setAccountError("Failed to load order history.");
+
+        const [userData, orderData] = await Promise.all([
+          fetchUser(userId),
+          fetchUserOrders(userId),
+        ]);
+
+        if (!isMounted) return;
+
+        setUserDetail(userData);
+        setOrders(orderData);
+      } catch (err) {
+        if (isMounted) {
+          setError("Failed to load account data.");
+        }
       } finally {
-        if (isMounted) setLoadingOrders(false);
+        if (isMounted) {
+          setLoadingUser(false);
+          setLoadingOrders(false);
+        }
       }
     }
 
@@ -68,20 +79,42 @@ const Account = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentUser?.id]);
+  }, [userId, navigate]);
 
-  const displayUser = profile || currentUser;
-  const displayName = displayUser?.username || "Alchemy Guest";
-  const email = displayUser?.email || "guest@alchemy.com";
-  const userRole = displayUser?.is_admin ? "System Admin" : "Member";
-  const createdAt = displayUser?.created_at
-    ? new Date(displayUser.created_at).toLocaleDateString()
+  const displayName =
+    userDetail?.username || currentUser?.username || "Alchemy Guest";
+
+  const email =
+    userDetail?.email || currentUser?.email || "guest@alchemy.com";
+
+  const roleLabel =
+    userDetail?.is_admin || currentUser?.role === "admin"
+      ? "System Admin"
+      : "Member";
+
+  const joinedDate = userDetail?.created_at
+    ? new Date(userDetail.created_at).toLocaleDateString()
     : "Not available";
 
   const menuItems = [
-    { id: "profile", label: "Profile", description: "Personal details", icon: "◎" },
-    { id: "orders", label: "Order History", description: "Past purchases", icon: "▤" },
-    { id: "settings", label: "Settings", description: "Security & preferences", icon: "⚙" },
+    {
+      id: "profile",
+      label: "Profile",
+      description: "Personal details",
+      icon: "◎",
+    },
+    {
+      id: "orders",
+      label: "Order History",
+      description: "Past purchases",
+      icon: "▤",
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      description: "Security & preferences",
+      icon: "⚙",
+    },
   ];
 
   function handlePanelChange(panelId) {
@@ -105,45 +138,63 @@ const Account = () => {
     }));
   }
 
-  function handleUpdatePassword(event) {
-    event.preventDefault();
+  async function handleUpdatePassword(event) {
+  event.preventDefault();
+  setNotice("");
 
-    if (
-      !passwordForm.currentPassword ||
-      !passwordForm.newPassword ||
-      !passwordForm.confirmPassword
-    ) {
-      setNotice("Please complete all password fields.");
-      return;
-    }
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setNotice("New password and confirmation do not match.");
-      return;
-    }
-
-    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    setNotice("Password update is not connected in this prototype yet.");
+  if (
+    !passwordForm.currentPassword ||
+    !passwordForm.newPassword ||
+    !passwordForm.confirmPassword
+  ) {
+    setNotice("Please complete all password fields.");
+    return;
   }
+
+  if (passwordForm.newPassword.length < 6) {
+    setNotice("New password must be at least 6 characters.");
+    return;
+  }
+
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    setNotice("New password and confirmation do not match.");
+    return;
+  }
+
+  try {
+    await updatePassword(
+      userId,
+      passwordForm.currentPassword,
+      passwordForm.newPassword
+    );
+
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+
+    setNotice("Password updated successfully.");
+  } catch (err) {
+    setNotice("Current password is incorrect or password update failed.");
+  }
+}
 
   function handleSavePreferences() {
     setNotice("Preferences saved locally for this prototype.");
   }
 
   function handleConfirmSignOut() {
-    // 清除登录状态
     localStorage.removeItem("liquidAlchemyCurrentUser");
-
-    // 清除年龄验证状态：退出后重新回到 Age Verification
-    localStorage.removeItem("liquidAlchemyAgeVerified");
-
-    navigate("/login", { replace: true });
+    navigate("/login");
   }
 
   return (
     <main className="account-page">
       <header className="account-topbar">
-        <Link to="/" className="account-logo">Liquid Alchemy</Link>
+        <Link to="/" className="account-logo">
+          Liquid Alchemy
+        </Link>
 
         <nav className="account-topnav">
           <Link to="/">New Releases</Link>
@@ -153,7 +204,9 @@ const Account = () => {
           <Link to="/account">Laboratory</Link>
         </nav>
 
-        <Link to="/cart" className="account-cart-link" aria-label="Open cart">🛒</Link>
+        <Link to="/cart" className="account-cart-link" aria-label="Open cart">
+          🛒
+        </Link>
       </header>
 
       <div className={`account-shell ${showSignOutModal ? "account-blurred" : ""}`}>
@@ -168,7 +221,9 @@ const Account = () => {
               <button
                 key={item.id}
                 type="button"
-                className={`account-menu-button ${activePanel === item.id ? "active" : ""}`}
+                className={`account-menu-button ${
+                  activePanel === item.id ? "active" : ""
+                }`}
                 onClick={() => handlePanelChange(item.id)}
               >
                 <span className="account-menu-icon">{item.icon}</span>
@@ -193,16 +248,18 @@ const Account = () => {
           </div>
 
           <div className="account-user-pill">
-            <div className="account-avatar">{displayName.slice(0, 2).toUpperCase()}</div>
+            <div className="account-avatar">
+              {displayName.slice(0, 2).toUpperCase()}
+            </div>
             <div>
               <strong>{displayName}</strong>
-              <span>{userRole}</span>
+              <span>{roleLabel}</span>
             </div>
           </div>
         </aside>
 
         <section className="account-content">
-          {accountError && <div className="account-notice">{accountError}</div>}
+          {error && <div className="account-notice">{error}</div>}
 
           {activePanel === "profile" && (
             <section className="account-panel">
@@ -211,76 +268,82 @@ const Account = () => {
                 <h1>Your Profile</h1>
               </div>
 
-              <div className="account-profile-grid">
-                <div className="account-profile-card">
-                  <div className="account-profile-image">
-                    <div className="account-profile-avatar">{displayName.slice(0, 2).toUpperCase()}</div>
+              {loadingUser ? (
+                <p className="status-text">Loading profile...</p>
+              ) : (
+                <>
+                  <div className="account-profile-grid">
+                    <div className="account-profile-card">
+                      <div className="account-profile-image">
+                        <div className="account-profile-avatar">
+                          {displayName.slice(0, 2).toUpperCase()}
+                        </div>
+                      </div>
+
+                      <div className="account-detail-grid">
+                        <div className="account-detail-item">
+                          <span>Account Name</span>
+                          <strong>{displayName}</strong>
+                        </div>
+
+                        <div className="account-detail-item">
+                          <span>Email Address</span>
+                          <strong>{email}</strong>
+                        </div>
+
+                        <div className="account-detail-item">
+                          <span>Account Role</span>
+                          <strong>{roleLabel}</strong>
+                        </div>
+
+                        <div className="account-detail-item">
+                          <span>Joined Date</span>
+                          <strong>{joinedDate}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <aside className="account-highlight-card">
+                      <p>The Laboratory Box</p>
+                      <h2>Your account is ready for future personalized cocktail selections.</h2>
+                      <span>Order and subscription features can be connected later.</span>
+                      <button type="button">Manage Subscription</button>
+                    </aside>
                   </div>
 
-                  <div className="account-detail-grid">
-                    <div className="account-detail-item">
-                      <span>Account Name</span>
-                      <strong>{displayName}</strong>
-                      <button type="button">Edit</button>
+                  <div className="account-preference-row">
+                    <div>
+                      <strong>Two-Factor Authentication</strong>
+                      <span>Secure your account with an extra layer of security.</span>
                     </div>
 
-                    <div className="account-detail-item">
-                      <span>Email Address</span>
-                      <strong>{email}</strong>
-                      <button type="button">Edit</button>
-                    </div>
-
-                    <div className="account-detail-item">
-                      <span>Account Role</span>
-                      <strong>{userRole}</strong>
-                      <button type="button">View</button>
-                    </div>
-
-                    <div className="account-detail-item">
-                      <span>Joined Date</span>
-                      <strong>{createdAt}</strong>
-                      <button type="button">View</button>
-                    </div>
+                    <button
+                      type="button"
+                      className={`account-switch ${settings.twoFactor ? "on" : ""}`}
+                      onClick={() => handleSettingToggle("twoFactor")}
+                      aria-label="Toggle two-factor authentication"
+                    >
+                      <span />
+                    </button>
                   </div>
-                </div>
 
-                <aside className="account-highlight-card">
-                  <p>The Laboratory Box</p>
-                  <h2>Your curated kit details will appear here once subscriptions are connected.</h2>
-                  <span>Status: Prototype placeholder</span>
-                  <button type="button">Manage Subscription</button>
-                </aside>
-              </div>
+                  <div className="account-preference-row">
+                    <div>
+                      <strong>Newsletter Subscription</strong>
+                      <span>Receive updates on experimental releases and laboratory notes.</span>
+                    </div>
 
-              <div className="account-preference-row">
-                <div>
-                  <strong>Two-Factor Authentication</strong>
-                  <span>Secure your account with an extra layer of security.</span>
-                </div>
-                <button
-                  type="button"
-                  className={`account-switch ${settings.twoFactor ? "on" : ""}`}
-                  onClick={() => handleSettingToggle("twoFactor")}
-                  aria-label="Toggle two-factor authentication"
-                >
-                  <span />
-                </button>
-              </div>
-
-              <div className="account-preference-row">
-                <div>
-                  <strong>Newsletter Subscription</strong>
-                  <span>Receive updates on experimental releases and laboratory notes.</span>
-                </div>
-                <button
-                  type="button"
-                  className={`account-switch ${settings.newsletter ? "on" : ""}`}
-                  onClick={() => handleSettingToggle("newsletter")}
-                  aria-label="Toggle newsletter subscription"
-                >
-                  <span />
-                </button>
-              </div>
+                    <button
+                      type="button"
+                      className={`account-switch ${settings.newsletter ? "on" : ""}`}
+                      onClick={() => handleSettingToggle("newsletter")}
+                      aria-label="Toggle newsletter subscription"
+                    >
+                      <span />
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
@@ -294,12 +357,9 @@ const Account = () => {
               </div>
 
               {loadingOrders ? (
-                <p className="status-text">Loading order history...</p>
+                <p className="status-text">Loading orders...</p>
               ) : orders.length === 0 ? (
-                <div className="account-empty-state">
-                  <h2>No order history yet.</h2>
-                  <p>Your completed orders will appear here after checkout is connected.</p>
-                </div>
+                <div className="account-notice">No order history yet.</div>
               ) : (
                 <div className="account-orders">
                   {orders.map((order) => (
@@ -309,22 +369,35 @@ const Account = () => {
                           <span>Order ID</span>
                           <strong>#{order.id}</strong>
                         </div>
+
                         <div>
                           <span>Placed On</span>
-                          <strong>{new Date(order.created_at).toLocaleDateString()}</strong>
+                          <strong>
+                            {order.created_at
+                              ? new Date(order.created_at).toLocaleDateString()
+                              : "Not available"}
+                          </strong>
                         </div>
+
                         <div>
-                          <span>User ID</span>
-                          <strong>{order.user_id}</strong>
+                          <span>Recipient</span>
+                          <strong>{displayName}</strong>
                         </div>
+
                         <div>
                           <span>Status</span>
                           <strong>{order.status}</strong>
                         </div>
+
                         <div>
                           <span>Total</span>
                           <strong>${Number(order.total_price).toFixed(2)}</strong>
                         </div>
+                      </div>
+
+                      <div className="account-order-detail">
+                        <p>Database order record</p>
+                        <button type="button">View Details</button>
                       </div>
                     </article>
                   ))}
@@ -344,25 +417,57 @@ const Account = () => {
                 <div className="account-section-copy">
                   <p>Access Control</p>
                   <h2>Update Password</h2>
-                  <span>Keep your account secure with a stronger alphanumeric password.</span>
+                  <span>
+                    Confirm your current password before setting a new one.
+                  </span>
                 </div>
 
                 <div className="account-password-grid">
                   <label>
                     Current Password
-                    <input name="currentPassword" type="password" value={passwordForm.currentPassword} onChange={handlePasswordChange} />
+                    <input
+                      name="currentPassword"
+                      type="password"
+                      value={passwordForm.currentPassword}
+                      onChange={handlePasswordChange}
+                    />
                   </label>
+
                   <label>
                     New Password
-                    <input name="newPassword" type="password" value={passwordForm.newPassword} onChange={handlePasswordChange} />
+                    <input
+                      name="newPassword"
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={handlePasswordChange}
+                    />
                   </label>
+
                   <label>
                     Confirm New Password
-                    <input name="confirmPassword" type="password" value={passwordForm.confirmPassword} onChange={handlePasswordChange} />
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={handlePasswordChange}
+                    />
                   </label>
-                  <button type="submit" className="account-dark-button">Update Credentials</button>
+
+                  <button type="submit" className="account-dark-button">
+                    Update Credentials
+                  </button>
                 </div>
               </form>
+              
+              {notice && (
+                <div
+                  className={`account-notice ${
+                    notice.includes("successfully") ? "success" : "error"
+                  }`}
+                >
+                  {notice}
+                </div>
+              )}
 
               <div className="account-settings-section">
                 <div className="account-section-copy">
@@ -374,7 +479,9 @@ const Account = () => {
                 <div className="account-check-list">
                   <button
                     type="button"
-                    className={`account-check-row ${settings.newsletter ? "checked" : ""}`}
+                    className={`account-check-row ${
+                      settings.newsletter ? "checked" : ""
+                    }`}
                     onClick={() => handleSettingToggle("newsletter")}
                   >
                     <span>
@@ -386,7 +493,9 @@ const Account = () => {
 
                   <button
                     type="button"
-                    className={`account-check-row ${settings.orderUpdates ? "checked" : ""}`}
+                    className={`account-check-row ${
+                      settings.orderUpdates ? "checked" : ""
+                    }`}
                     onClick={() => handleSettingToggle("orderUpdates")}
                   >
                     <span>
@@ -396,7 +505,11 @@ const Account = () => {
                     <i />
                   </button>
 
-                  <button type="button" className="account-outline-button" onClick={handleSavePreferences}>
+                  <button
+                    type="button"
+                    className="account-outline-button"
+                    onClick={handleSavePreferences}
+                  >
                     Save Preferences
                   </button>
                 </div>
@@ -406,12 +519,15 @@ const Account = () => {
                 <div>
                   <p>Destructive Action</p>
                   <h2>Account Deletion</h2>
-                  <span>Permanently purge your laboratory profile and historical records.</span>
+                  <span>
+                    Account deletion is not connected to the database yet.
+                  </span>
                 </div>
+
                 <button type="button">Deactivate Laboratory Profile</button>
               </div>
 
-              {notice && <div className="account-notice">{notice}</div>}
+              
             </section>
           )}
         </section>
@@ -433,13 +549,24 @@ const Account = () => {
           <section className="account-modal-card">
             <p>Account Exit</p>
             <h2>Are you sure you want to sign out?</h2>
-            <span>You will return to the age verification screen before accessing the laboratory again.</span>
+            <span>
+              You will need to sign in again to access your profile and order history.
+            </span>
 
             <div className="account-modal-actions">
-              <button type="button" className="account-outline-button" onClick={() => setShowSignOutModal(false)}>
+              <button
+                type="button"
+                className="account-outline-button"
+                onClick={() => setShowSignOutModal(false)}
+              >
                 Cancel
               </button>
-              <button type="button" className="account-dark-button danger" onClick={handleConfirmSignOut}>
+
+              <button
+                type="button"
+                className="account-dark-button danger"
+                onClick={handleConfirmSignOut}
+              >
                 Sign Out
               </button>
             </div>

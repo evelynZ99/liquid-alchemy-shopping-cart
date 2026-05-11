@@ -88,7 +88,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 登录页面：包含年龄验证、普通登录、Staff access、Create Account */}
+        {/* 登录页面：包含年龄验证、普通登录、Create Account */}
         <Route path="/login" element={<Login />} />
 
 
