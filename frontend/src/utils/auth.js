@@ -20,7 +20,8 @@ export function setCurrentUser(user) {
 }
 
 export function clearCurrentUser() {
-  localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem("liquidAlchemyCurrentUser");
+  localStorage.removeItem("currentUser");
 }
 
 export function isAdminUser(user) {
