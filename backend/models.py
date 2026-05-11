@@ -59,3 +59,55 @@ class OrderItem(SQLModel, table=True):
     product_id: int = Field(foreign_key="products.id")
     quantity: int
     price_at_purchase: float
+
+
+class UserCreate(SQLModel):
+    username: str
+    email: str
+    password: str
+    is_admin: bool = False
+    admin_key: Optional[str] = None
+
+
+class UserLogin(SQLModel):
+    email: str
+    password: str
+
+
+class UserPublic(SQLModel):
+    id: int
+    username: str
+    email: str
+    password_hash: str
+    is_admin: bool
+    created_at: datetime
+
+
+class UserRoleUpdate(SQLModel):
+    is_admin: bool
+
+
+class ProductCreate(SQLModel):
+    name: str
+    description: str
+    price: float
+    image_url: str
+    category: str
+    stock: int = 0
+    alcohol_type: Optional[str] = None
+    flavor_profile: Optional[str] = None
+    difficulty: Optional[str] = None
+    occasion: Optional[str] = None
+
+
+class ProductUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    image_url: Optional[str] = None
+    category: Optional[str] = None
+    stock: Optional[int] = None
+    alcohol_type: Optional[str] = None
+    flavor_profile: Optional[str] = None
+    difficulty: Optional[str] = None
+    occasion: Optional[str] = None

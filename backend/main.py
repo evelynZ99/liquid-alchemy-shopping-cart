@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlmodel import Session
 from db import engine, create_db_and_tables
-from routers import products, cart, users, orders, wishlist
+from routers import products, cart, users, orders, wishlist, admin
 
 app = FastAPI()
 
@@ -39,3 +39,4 @@ app.include_router(cart.router)
 app.include_router(users.router)
 app.include_router(orders.router)
 app.include_router(wishlist.router)
+app.include_router(admin.router)

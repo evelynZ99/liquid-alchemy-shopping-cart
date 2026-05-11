@@ -1,4 +1,10 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+function adminHeaders(adminUserId) {
+  if (!adminUserId) return {};
+  return { "X-Admin-User-Id": adminUserId };
+}
 
 // ==================== Products ====================
 
@@ -16,40 +22,48 @@ export async function fetchProductById(productId) {
 
 // ==================== Cart ====================
 
-export async function fetchCart() {
-  const response = await fetch(`${API_BASE_URL}/cart/`);
+export async function fetchCart(userId) {
+  if (!userId) return [];
+  const response = await fetch(`${API_BASE_URL}/cart/?user_id=${userId}`);
   if (!response.ok) throw new Error("Failed to fetch cart");
   return response.json();
 }
 
-export async function addToCart(productId, quantity = 1) {
+export async function addToCart(userId, productId, quantity = 1) {
+  if (!userId) throw new Error("Login required");
   const response = await fetch(
-    `${API_BASE_URL}/cart/?product_id=${productId}&quantity=${quantity}`,
+    `${API_BASE_URL}/cart/?user_id=${userId}&product_id=${productId}&quantity=${quantity}`,
     { method: "POST" }
   );
   if (!response.ok) throw new Error("Failed to add to cart");
   return response.json();
 }
 
-export async function updateCartItem(cartItemId, quantity) {
+export async function updateCartItem(userId, cartItemId, quantity) {
+  if (!userId) throw new Error("Login required");
   const response = await fetch(
-    `${API_BASE_URL}/cart/${cartItemId}?quantity=${quantity}`,
+    `${API_BASE_URL}/cart/${cartItemId}?user_id=${userId}&quantity=${quantity}`,
     { method: "PUT" }
   );
   if (!response.ok) throw new Error("Failed to update cart item");
   return response.json();
 }
 
-export async function deleteCartItem(cartItemId) {
-  const response = await fetch(`${API_BASE_URL}/cart/${cartItemId}`, {
+export async function deleteCartItem(userId, cartItemId) {
+  if (!userId) throw new Error("Login required");
+  const response = await fetch(
+    `${API_BASE_URL}/cart/${cartItemId}?user_id=${userId}`,
+    {
     method: "DELETE",
-  });
+    }
+  );
   if (!response.ok) throw new Error("Failed to delete cart item");
   return response.json();
 }
 
-export async function clearCart() {
-  const response = await fetch(`${API_BASE_URL}/cart/`, {
+export async function clearCart(userId) {
+  if (!userId) throw new Error("Login required");
+  const response = await fetch(`${API_BASE_URL}/cart/?user_id=${userId}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to clear cart");
@@ -59,16 +73,64 @@ export async function clearCart() {
 // ==================== Users ====================
 // TODO: 成员A负责实现
 
-export async function register(username, email, password) {
-  // TODO
+export async function register(username, email, password, options = {}) {
+  const payload = {
+    username,
+    email,
+    password,
+    is_admin: Boolean(options.isAdmin),
+    admin_key: options.adminKey || null,
+  };
+  const response = await fetch(`${API_BASE_URL}/users/register`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error("Failed to register");
+  return response.json();
 }
 
 export async function login(email, password) {
-  // TODO
+  const response = await fetch(`${API_BASE_URL}/users/login`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) throw new Error("Failed to login");
+  return response.json();
 }
 
 export async function fetchUser(userId) {
-  // TODO
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+  if (!response.ok) throw new Error("Failed to fetch user");
+  return response.json();
+}
+
+export async function fetchUsers(adminUserId) {
+  const response = await fetch(`${API_BASE_URL}/users/`, {
+    headers: adminHeaders(adminUserId),
+  });
+  if (!response.ok) throw new Error("Failed to fetch users");
+  return response.json();
+}
+
+export async function deleteUser(adminUserId, userId) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    method: "DELETE",
+    headers: adminHeaders(adminUserId),
+  });
+  if (!response.ok) throw new Error("Failed to delete user");
+  return response.json();
+}
+
+export async function updateUserRole(adminUserId, userId, isAdmin) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/role`, {
+    method: "PATCH",
+    headers: { ...JSON_HEADERS, ...adminHeaders(adminUserId) },
+    body: JSON.stringify({ is_admin: isAdmin }),
+  });
+  if (!response.ok) throw new Error("Failed to update user role");
+  return response.json();
 }
 
 // ==================== Wishlist ====================
@@ -90,13 +152,76 @@ export async function removeFromWishlist(wishlistItemId) {
 // TODO: 成员B负责实现
 
 export async function createOrder(userId, cartItems) {
-  // TODO
+  const response = await fetch(`${API_BASE_URL}/orders/`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ user_id: userId, items: cartItems }),
+  });
+  if (!response.ok) throw new Error("Failed to create order");
+  return response.json();
 }
 
 export async function fetchOrder(orderId) {
-  // TODO
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}`);
+  if (!response.ok) throw new Error("Failed to fetch order");
+  return response.json();
 }
 
 export async function fetchUserOrders(userId) {
-  // TODO
+  const response = await fetch(`${API_BASE_URL}/orders/user/${userId}`);
+  if (!response.ok) throw new Error("Failed to fetch user orders");
+  return response.json();
+}
+
+export async function fetchAllOrders(adminUserId) {
+  const response = await fetch(`${API_BASE_URL}/orders/`, {
+    headers: adminHeaders(adminUserId),
+  });
+  if (!response.ok) throw new Error("Failed to fetch orders");
+  return response.json();
+}
+
+export async function createProduct(adminUserId, productData) {
+  const response = await fetch(`${API_BASE_URL}/products/`, {
+    method: "POST",
+    headers: { ...JSON_HEADERS, ...adminHeaders(adminUserId) },
+    body: JSON.stringify(productData),
+  });
+  if (!response.ok) throw new Error("Failed to create product");
+  return response.json();
+}
+
+export async function updateProduct(adminUserId, productId, productData) {
+  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+    method: "PUT",
+    headers: { ...JSON_HEADERS, ...adminHeaders(adminUserId) },
+    body: JSON.stringify(productData),
+  });
+  if (!response.ok) throw new Error("Failed to update product");
+  return response.json();
+}
+
+export async function deleteProduct(adminUserId, productId) {
+  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+    method: "DELETE",
+    headers: adminHeaders(adminUserId),
+  });
+  if (!response.ok) throw new Error("Failed to delete product");
+  return response.json();
+}
+
+export async function fetchAdminOverview(adminUserId) {
+  const response = await fetch(`${API_BASE_URL}/admin/overview`, {
+    headers: adminHeaders(adminUserId),
+  });
+  if (!response.ok) throw new Error("Failed to fetch admin overview");
+  return response.json();
+}
+
+export async function fetchAllCarts(adminUserId) {
+  const response = await fetch(`${API_BASE_URL}/cart/all`, {
+    headers: adminHeaders(adminUserId),
+  });
+  if (!response.ok) throw new Error("Failed to fetch carts");
+  return response.json();
 }

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from db import engine
-from models import Product
+from models import Product, ProductCreate, ProductUpdate, User
+from deps import require_admin
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -20,6 +21,52 @@ def get_product(product_id: int):
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
         return product
+
+
+@router.post("/", response_model=Product)
+def create_product(
+    product_in: ProductCreate,
+    admin_user: User = Depends(require_admin),
+):
+    with Session(engine) as session:
+        product = Product(**product_in.model_dump())
+        session.add(product)
+        session.commit()
+        session.refresh(product)
+        return product
+
+
+@router.put("/{product_id}", response_model=Product)
+def update_product(
+    product_id: int,
+    product_update: ProductUpdate,
+    admin_user: User = Depends(require_admin),
+):
+    with Session(engine) as session:
+        product = session.get(Product, product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        update_data = product_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(product, key, value)
+        session.add(product)
+        session.commit()
+        session.refresh(product)
+        return product
+
+
+@router.delete("/{product_id}")
+def delete_product(
+    product_id: int,
+    admin_user: User = Depends(require_admin),
+):
+    with Session(engine) as session:
+        product = session.get(Product, product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        session.delete(product)
+        session.commit()
+        return {"message": "Product deleted"}
 
 
 @router.post("/seed")

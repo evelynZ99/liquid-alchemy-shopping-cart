@@ -8,6 +8,7 @@ import {
   deleteCartItem,
   clearCart,
 } from "../services/api";
+import { getCurrentUser } from "../utils/auth";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -16,6 +17,8 @@ const Home = () => {
   const [loadingCart, setLoadingCart] = useState(true);
   const [error, setError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
 
   const [filters, setFilters] = useState({
     sour: 50,
@@ -36,9 +39,14 @@ const Home = () => {
   }
 
   async function loadCart() {
+    if (!userId) {
+      setCart([]);
+      setLoadingCart(false);
+      return;
+    }
     try {
       setLoadingCart(true);
-      const data = await fetchCart();
+      const data = await fetchCart(userId);
       setCart(data);
     } catch (err) {
       setError("Failed to load cart.");
@@ -55,7 +63,11 @@ const Home = () => {
   async function handleAddToCart(productId) {
     try {
       setError("");
-      await addToCart(productId, 1);
+      if (!userId) {
+        setError("Please log in to add items to cart.");
+        return;
+      }
+      await addToCart(userId, productId, 1);
       await loadCart();
       setIsCartOpen(true);
     } catch (err) {
@@ -66,7 +78,11 @@ const Home = () => {
   async function handleIncrease(item) {
     try {
       setError("");
-      await updateCartItem(item.cart_item_id, item.quantity + 1);
+      if (!userId) {
+        setError("Please log in to update cart.");
+        return;
+      }
+      await updateCartItem(userId, item.cart_item_id, item.quantity + 1);
       await loadCart();
     } catch (err) {
       setError("Failed to update item quantity.");
@@ -76,10 +92,14 @@ const Home = () => {
   async function handleDecrease(item) {
     try {
       setError("");
+      if (!userId) {
+        setError("Please log in to update cart.");
+        return;
+      }
       if (item.quantity <= 1) {
-        await deleteCartItem(item.cart_item_id);
+        await deleteCartItem(userId, item.cart_item_id);
       } else {
-        await updateCartItem(item.cart_item_id, item.quantity - 1);
+        await updateCartItem(userId, item.cart_item_id, item.quantity - 1);
       }
       await loadCart();
     } catch (err) {
@@ -90,7 +110,11 @@ const Home = () => {
   async function handleRemove(cartItemId) {
     try {
       setError("");
-      await deleteCartItem(cartItemId);
+      if (!userId) {
+        setError("Please log in to update cart.");
+        return;
+      }
+      await deleteCartItem(userId, cartItemId);
       await loadCart();
     } catch (err) {
       setError("Failed to remove item.");
@@ -100,7 +124,11 @@ const Home = () => {
   async function handleClearCart() {
     try {
       setError("");
-      await clearCart();
+      if (!userId) {
+        setError("Please log in to update cart.");
+        return;
+      }
+      await clearCart(userId);
       await loadCart();
     } catch (err) {
       setError("Failed to clear cart.");
