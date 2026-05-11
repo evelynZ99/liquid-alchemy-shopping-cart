@@ -14,15 +14,16 @@ const Checkout = () => {
 
   const navigate = useNavigate()
   const currentUser = getCurrentUser()
-  const userId = currentUser?.id
+  const userId = currentUser?.id ?? 1; // TODO: 测试用，登录功能完成后改回const userId = currentUser?.id
+
 
   useEffect(() => {
-    fetchCart(userId).then(data => setCartItems(data))
-  }, [])
+    if (userId) fetchCart(userId).then(data => setCartItems(data))
+  }, [userId])
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const shippingCost = shipping === 'express' ? 24 : 0
-  const tax = subtotal * 0.2
+  const tax = subtotal * 0.08
   const total = subtotal + shippingCost + tax
 
   const handleInput = (e) => {
@@ -279,7 +280,9 @@ const Checkout = () => {
                   <div>
                     <p style={{ fontFamily: 'Newsreader, serif', fontSize: '20px', color: '#2f2c29', margin: '0 0 4px' }}>{item.name}</p>
                     <p style={{ fontFamily: 'Inter', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#6e6a63', margin: '0 0 8px' }}>QTY: {item.quantity}</p>
-                    <p style={{ fontFamily: 'Newsreader, serif', fontSize: '20px', color: '#2f2c29', margin: 0 }}>${(item.price * item.quantity).toFixed(2)}</p>
+                    <p style={{ fontFamily: 'Newsreader, serif', fontSize: '20px', color: '#2f2c29', margin: 0 }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif' }}>$</span>{(item.price * item.quantity).toFixed(2)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -297,7 +300,7 @@ const Checkout = () => {
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <span style={{ fontFamily: 'Inter', fontSize: '15px', color: '#6e6a63' }}>Tax (VAT 20%)</span>
+                <span style={{ fontFamily: 'Inter', fontSize: '15px', color: '#6e6a63' }}>Tax (8%)</span>
                 <span style={{ fontFamily: 'Inter', fontSize: '15px', color: '#2f2c29' }}>${tax.toFixed(2)}</span>
               </div>
 
@@ -306,7 +309,9 @@ const Checkout = () => {
                 paddingTop: '20px', borderTop: '1px solid #d8d2c6', marginBottom: '28px'
               }}>
                 <span style={{ fontFamily: 'Newsreader, serif', fontSize: '32px', color: '#2f2c29' }}>Total</span>
-                <span style={{ fontFamily: 'Newsreader, serif', fontSize: '32px', color: '#2f2c29' }}>${total.toFixed(2)}</span>
+                <span style={{ fontFamily: 'Newsreader, serif', fontSize: '32px', color: '#2f2c29' }}>
+                  <span style={{ fontStyle: 'normal', fontFamily: 'Inter, sans-serif' }}>$</span>{total.toFixed(2)}
+                </span>
               </div>
 
               <div style={{ borderTop: '1px solid #d8d2c6', paddingTop: '24px' }}>

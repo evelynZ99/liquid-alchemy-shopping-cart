@@ -20,7 +20,7 @@ const Home = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
+  const userId = currentUser?.id ?? 1; // TODO: 测试用，登录功能完成后改回const userId = currentUser?.id
 
   const [filters, setFilters] = useState({
     sour: 50,

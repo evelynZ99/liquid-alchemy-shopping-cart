@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCart, updateCartItem, deleteCartItem } from '../services/api'
+import { getCurrentUser } from '../utils/auth'
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const currentUser = getCurrentUser()
+  const userId = currentUser?.id ?? 1 // TODO: 测试用，登录功能完成后删掉这行
 
   useEffect(() => {
-    fetchCart()
+    fetchCart(userId)
       .then(data => {
         setCartItems(data)
         setLoading(false)
@@ -25,7 +28,7 @@ const Cart = () => {
 
   const handleQuantityChange = (cartItemId, newQty) => {
     if (newQty < 1) return
-    updateCartItem(cartItemId, newQty).then(() => {
+    updateCartItem(userId, cartItemId, newQty).then(() => {
       setCartItems(cartItems.map(item =>
         item.cart_item_id === cartItemId
           ? { ...item, quantity: newQty }
@@ -35,7 +38,7 @@ const Cart = () => {
   }
 
   const handleRemove = (cartItemId) => {
-    deleteCartItem(cartItemId).then(() => {
+    deleteCartItem(userId, cartItemId).then(() => {
       setCartItems(cartItems.filter(item => item.cart_item_id !== cartItemId))
     })
   }
@@ -269,11 +272,8 @@ const Cart = () => {
                 }}>
                   Total
                 </span>
-                <span style={{
-                  fontFamily: 'Newsreader, serif', fontSize: '28px',
-                  fontStyle: 'italic', color: '#2f2c29'
-                }}>
-                  ${(total * 1.08).toFixed(2)}
+                <span style={{ fontFamily: 'Newsreader, serif', fontSize: '28px', fontStyle: 'italic', color: '#2f2c29' }}>
+                  <span style={{ fontStyle: 'normal', fontFamily: 'Inter, sans-serif' }}>$</span>{(total * 1.08).toFixed(2)}
                 </span>
               </div>
 
