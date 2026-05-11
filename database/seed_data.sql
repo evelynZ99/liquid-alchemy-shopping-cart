@@ -1,69 +1,92 @@
--- MySQL dump 10.13  Distrib 9.6.0, for macos26.3 (arm64)
---
--- Host: localhost    Database: ecommerce_cart_db
--- ------------------------------------------------------
--- Server version	9.6.0
+-- Liquid Alchemy — Product Seed Data
+-- Run: mysql -u root -p ecommerce_cart_db < database/seed_data.sql
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-SET @MYSQLDUMP_TEMP_LOG_BIN = @@SESSION.SQL_LOG_BIN;
-SET @@SESSION.SQL_LOG_BIN= 0;
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE `order_items`;
+TRUNCATE TABLE `cart_items`;
+TRUNCATE TABLE `wishlist_items`;
+TRUNCATE TABLE `products`;
+SET FOREIGN_KEY_CHECKS = 1;
 
---
--- GTID state at the beginning of the backup 
---
+INSERT INTO `products`
+  (`id`, `name`, `description`, `price`, `image_url`, `category`, `stock`,
+   `alcohol_type`, `flavor_profile`, `difficulty`, `occasion`)
+VALUES
+  -- ── Cocktails ──────────────────────────────────────────────────────────────
+  (1,  'Cucumber Salad Single',
+       'Hendrick\'s Gin, Mezcal, Olive Brine',
+       35, '/images/cucumber-salad.png',   'Cocktails', 12,
+       'Gin, Mezcal',  'Savory',          'Medium',   'Casual'),
 
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '7c45360a-2be9-11f1-a513-1840fa24c56f:1-171';
+  (2,  'Pineappu Beach Single',
+       'Japanese Whisky, Yuzu Umeshu, Pineapple Cordial',
+       38, '/images/pineappu-beach.png',   'Cocktails', 10,
+       'Whisky',       'Sweet & Sour',    'Easy',     'Casual'),
 
---
--- Table structure for table `products`
---
+  (3,  'Smoky Chile & Honey',
+       'Islay Whisky, Scotch Whisky, Chile Pepper Liqueur, Elderflower Liqueur, Honey, Lemon',
+       39, '/images/smoky-chile-honey.png','Cocktails', 10,
+       'Whisky',       'Smoky & Sweet',   'Medium',   'Date Night'),
 
-DROP TABLE IF EXISTS `products`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `products` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `description` varchar(255) NOT NULL,
-  `price` float NOT NULL,
-  `image_url` varchar(255) NOT NULL,
-  `category` varchar(255) NOT NULL,
-  `stock` int NOT NULL,
-  `alcohol_type` varchar(100) DEFAULT NULL,
-  `flavor_profile` varchar(100) DEFAULT NULL,
-  `difficulty` varchar(50) DEFAULT NULL,
-  `occasion` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  (4,  'Carrot Cake',
+       'Suntory Kakubin Whisky, White Rum, Lillet Blanc, Butter, Carrot Juice, Almond Milk, Orgeat, Cinnamon, Lemon',
+       39, '/images/carrot-cake.png',      'Cocktails', 10,
+       'Whisky, Rum',  'Sweet & Creamy',  'Advanced', 'Celebration'),
 
---
--- Dumping data for table `products`
---
+  (5,  'Tomato Cobbler',
+       'Fino Sherry, Tomato Syrup, Lemon Juice',
+       35, '/images/tomato-cobbler.png',   'Cocktails', 10,
+       'Sherry',       'Savory & Bright', 'Easy',     'Casual'),
 
-LOCK TABLES `products` WRITE;
-/*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,'Cucumber Salad Single','Hendrick\'s Gin, Mezcal, Olive Brine',35,'/images/cucumber-salad.png','Savory / Fresh',12,NULL,NULL,NULL,NULL),(2,'Pineappu Beach Single','Japanese Whisky, Yuzu Umeshu, Pineapple Cordial',38,'/images/pineappu-beach.png','Sweet / Sour',10,NULL,NULL,NULL,NULL),(3,'Shima Fizzy Kit','Mezcal, Dashi, Watermelon Soda',75,'/images/shima-fizzy.png','Fizzy / Experimental',8,NULL,NULL,NULL,NULL),(4,'Smoky Chile & Honey','Islay Whisky, Scotch Whisky, Chile Pepper Liqueur, Elderflower Liqueur, Honey, Lemon',39,'/images/smoky-chile-honey.png','Sweet & Sour',10,NULL,NULL,NULL,NULL),(5,'Carrot Cake','Suntory Kakubin Whisky, White Rum, Lillet Blanc, Butter, Carrot Juice, Almond Milk, Orgeat, Cinnamon, Lemon',39,'/images/carrot-cake.png','Sweet & Sour',10,NULL,NULL,NULL,NULL),(6,'Tomato Cobbler','Fino Sherry, Tomato Syrup, Lemon Juice',35,'/images/tomato-cobbler.png','Sweet & Sour',10,NULL,NULL,NULL,NULL),(7,'Kicu In The Sidecar','Chrysanthemum Sake, Apricot Liqueur, D.O.M Benedictine, Lemon',39,'/images/kicu-sidecar.png','Sweet & Sour',10,NULL,NULL,NULL,NULL),(8,'Shiozakura Collins','Roku Gin, Sakura Vermouth, Shio-zakura Saline Solution, Lemon, Simple Syrup, CO2',38,'/images/shiozakura-collins.png','Refreshing',10,NULL,NULL,NULL,NULL);
-/*!40000 ALTER TABLE `products` ENABLE KEYS */;
-UNLOCK TABLES;
-SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+  (6,  'Kicu In The Sidecar',
+       'Chrysanthemum Sake, Apricot Liqueur, D.O.M Benedictine, Lemon',
+       39, '/images/kicu-sidecar.png',     'Cocktails', 10,
+       'Sake',         'Floral & Citrus', 'Medium',   'Date Night'),
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+  (7,  'Shiozakura Collins',
+       'Roku Gin, Sakura Vermouth, Shio-zakura Saline Solution, Lemon, Simple Syrup, CO2',
+       38, '/images/shiozakura-collins.png','Cocktails',10,
+       'Gin',          'Refreshing',      'Easy',     'Casual'),
 
--- Dump completed on 2026-05-04 11:07:19
+  -- ── Kits ───────────────────────────────────────────────────────────────────
+  (8,  'Shima Fizzy Kit',
+       'Mezcal, Dashi, Watermelon Soda — serves 2',
+       75, '/images/shima-fizzy.png',      'Kits',      8,
+       'Mezcal',       'Fizzy & Experimental', 'Medium', 'Party'),
+
+  (9,  'Mojito Starter Kit',
+       'White Rum, Fresh Mint, Lime, Cane Sugar, Soda Water — serves 4',
+       65, '/images/mojito-kit.png',       'Kits',     12,
+       'Rum',          'Fresh & Citrus',  'Easy',     'Party'),
+
+  (10, 'Classic Margarita Kit',
+       'Blanco Tequila, Triple Sec, Fresh Lime, Salt — serves 4',
+       70, '/images/margarita-kit.png',    'Kits',     10,
+       'Tequila',      'Sour & Bright',   'Easy',     'Party'),
+
+  -- ── Glassware ──────────────────────────────────────────────────────────────
+  (11, 'Coupe Glass Set',
+       'Handblown crystal coupe, set of 4. Ideal for cocktails and champagne.',
+       85, '/images/coupe-glass.png',      'Glassware',15,
+       NULL, NULL, NULL, NULL),
+
+  (12, 'Highball Glass Set',
+       'Clear crystal highball, set of 4. Perfect for long cocktails and fizzy drinks.',
+       72, '/images/highball-glass.png',   'Glassware',15,
+       NULL, NULL, NULL, NULL),
+
+  (13, 'Crystal Rocks Glass',
+       'Heavy-base crystal rocks glass, set of 2. Designed for whiskey and spirit pours.',
+       68, '/images/rocks-glass.png',      'Glassware',20,
+       NULL, NULL, NULL, NULL),
+
+  -- ── Bar Tools ──────────────────────────────────────────────────────────────
+  (14, 'Cocktail Shaker Set',
+       '3-piece stainless steel shaker with built-in strainer and measuring cap.',
+       55, '/images/shaker-set.png',       'Bar Tools',20,
+       NULL, NULL, NULL, NULL),
+
+  (15, 'Precision Jigger',
+       'Double-sided stainless steel jigger, 30ml / 60ml. Calibrated for accuracy.',
+       28, '/images/jigger-set.png',       'Bar Tools',25,
+       NULL, NULL, NULL, NULL);

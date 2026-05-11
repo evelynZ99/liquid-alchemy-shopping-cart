@@ -137,15 +137,28 @@ export async function updateUserRole(adminUserId, userId, isAdmin) {
 // TODO: 成员C负责实现
 
 export async function fetchWishlist(userId) {
-  // TODO
+  if (!userId) return [];
+  const response = await fetch(`${API_BASE_URL}/wishlist/${userId}`);
+  if (!response.ok) throw new Error("Failed to fetch wishlist");
+  return response.json();
 }
 
 export async function addToWishlist(userId, productId) {
-  // TODO
+  if (!userId) throw new Error("Login required");
+  const response = await fetch(
+    `${API_BASE_URL}/wishlist/?user_id=${userId}&product_id=${productId}`,
+    { method: "POST" }
+  );
+  if (!response.ok) throw new Error("Failed to add to wishlist");
+  return response.json();
 }
 
 export async function removeFromWishlist(wishlistItemId) {
-  // TODO
+  const response = await fetch(`${API_BASE_URL}/wishlist/${wishlistItemId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to remove from wishlist");
+  return response.json();
 }
 
 // ==================== Orders ====================
