@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCart, createOrder } from '../services/api'
+import { getCurrentUser } from '../utils/auth'
 
 const Checkout = () => {
   const [cartItems, setCartItems] = useState([])
@@ -12,9 +13,11 @@ const Checkout = () => {
   })
 
   const navigate = useNavigate()
+  const currentUser = getCurrentUser()
+  const userId = currentUser?.id
 
   useEffect(() => {
-    fetchCart().then(data => setCartItems(data))
+    fetchCart(userId).then(data => setCartItems(data))
   }, [])
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -33,14 +36,14 @@ const Checkout = () => {
     }
     setSubmitting(true)
     try {
-      const order = await createOrder(1, cartItems, {
+      const order = await createOrder(userId, cartItems, {
         name: `${form.firstName} ${form.lastName}`,
         address: `${form.address}, ${form.city} ${form.postalCode}`,
         method: shipping, subtotal, shippingCost, tax, total
       })
       navigate('/payment-success', { state: { order, cartItems } })
     } catch (err) {
-      console.error('创建订单失败:', err)
+      console.error('Failed to create order:', err)
       alert('Something went wrong. Please try again.')
       setSubmitting(false)
     }
@@ -169,7 +172,6 @@ const Checkout = () => {
                 <h2 style={sectionHeadingStyle}>Payment Details</h2>
               </div>
 
-              {/* 模拟信用卡 */}
               <div style={{
                 backgroundColor: '#2e2e2e', color: '#efe8dc',
                 padding: '24px 28px', marginBottom: '24px'
@@ -220,7 +222,6 @@ const Checkout = () => {
               </div>
             </section>
 
-            {/* 提交按钮 */}
             <button
               onClick={handleSubmit}
               disabled={submitting}
@@ -261,37 +262,30 @@ const Checkout = () => {
                 Order Summary
               </h3>
 
-              {/* 商品列表 */}
               {cartItems.map(item => (
                 <div key={item.cart_item_id} style={{
-                  display: 'flex', gap: '20px',
-                  marginBottom: '24px',
+                  display: 'flex', gap: '20px', marginBottom: '24px',
+                }}>
+                  <div style={{
+                    width: '100px', height: '100px',
+                    border: '1px solid #d8d2c6',
+                    flexShrink: 0, overflow: 'hidden'
                   }}>
-                    {/* 图片加边框 */}
-                    <div style={{
-                      width: '100px', height: '100px',
-                      border: '1px solid #d8d2c6',
-                      flexShrink: 0, overflow: 'hidden'
-                      }}>
-                        {item.image_url && (
-                          <img src={item.image_url} alt={item.name}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          )}
-                          </div>
-                          <div>
-                            <p style={{ fontFamily: 'Newsreader, serif', fontSize: '20px', color: '#2f2c29', margin: '0 0 4px' }}>{item.name}</p>
-                            <p style={{ fontFamily: 'Inter', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#6e6a63', margin: '0 0 8px' }}>QTY: {item.quantity}</p>
-                            <p style={{ fontFamily: 'Newsreader, serif', fontSize: '20px', color: '#2f2c29', margin: 0 }}>${(item.price * item.quantity).toFixed(2)}</p>
-                          </div>
-                        </div>
-                      ))}
-              
-              
+                    {item.image_url && (
+                      <img src={item.image_url} alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: 'Newsreader, serif', fontSize: '20px', color: '#2f2c29', margin: '0 0 4px' }}>{item.name}</p>
+                    <p style={{ fontFamily: 'Inter', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#6e6a63', margin: '0 0 8px' }}>QTY: {item.quantity}</p>
+                    <p style={{ fontFamily: 'Newsreader, serif', fontSize: '20px', color: '#2f2c29', margin: 0 }}>${(item.price * item.quantity).toFixed(2)}</p>
+                  </div>
+                </div>
+              ))}
 
-              {/* 分割线 */}
               <div style={{ borderTop: '1px solid #d8d2c6', marginBottom: '20px' }} />
 
-              {/* 小计、运费、税 */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ fontFamily: 'Inter', fontSize: '15px', color: '#6e6a63' }}>Subtotal</span>
                 <span style={{ fontFamily: 'Inter', fontSize: '15px', color: '#2f2c29' }}>${subtotal.toFixed(2)}</span>
@@ -307,7 +301,6 @@ const Checkout = () => {
                 <span style={{ fontFamily: 'Inter', fontSize: '15px', color: '#2f2c29' }}>${tax.toFixed(2)}</span>
               </div>
 
-              {/* 总计 */}
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 paddingTop: '20px', borderTop: '1px solid #d8d2c6', marginBottom: '28px'
@@ -316,7 +309,6 @@ const Checkout = () => {
                 <span style={{ fontFamily: 'Newsreader, serif', fontSize: '32px', color: '#2f2c29' }}>${total.toFixed(2)}</span>
               </div>
 
-              {/* 优惠码 */}
               <div style={{ borderTop: '1px solid #d8d2c6', paddingTop: '24px' }}>
                 <label style={{
                   fontFamily: 'Inter', fontSize: '11px',
