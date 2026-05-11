@@ -35,6 +35,23 @@ const Checkout = () => {
       alert('Please fill in all required fields')
       return
     }
+
+    const cardDigits = form.cardNumber.replace(/\s/g, '')
+    if (!/^\d{16}$/.test(cardDigits)) {
+      alert('Card number must be 16 digits')
+      return
+    }
+
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(form.expiry)) {
+      alert('Expiry date must be in MM/YY format')
+      return
+    }
+
+    if (!/^\d{3}$/.test(form.cvv)) {
+      alert('CVV must be 3 digits')
+      return
+    }
+    
     setSubmitting(true)
     try {
       const order = await createOrder(userId, cartItems, {
