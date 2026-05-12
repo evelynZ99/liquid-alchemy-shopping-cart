@@ -10,6 +10,7 @@ import PaymentSuccess from './pages/PaymentSuccess'
 import Wishlist from './pages/Wishlist'
 import Account from './pages/Account'
 import NotFound from './pages/NotFound'
+import Laboratory from './pages/Laboratory'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
@@ -37,6 +38,7 @@ const App = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/laboratory" element={<Laboratory />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/account" element={<Account />} />
         <Route path="/admin" element={<AdminRoute element={<AdminDashboard />} />} />

@@ -170,12 +170,14 @@ export async function updateUserRole(adminUserId, userId, isAdmin) {
 // ==================== Wishlist ====================
 
 export async function fetchWishlist(userId) {
+  if (!userId) return [];
   const response = await fetch(`${API_BASE_URL}/wishlist/${userId}`);
   if (!response.ok) throw new Error("Failed to fetch wishlist");
   return response.json();
 }
 
 export async function addToWishlist(userId, productId) {
+  if (!userId) throw new Error("Login required");
   const response = await fetch(
     `${API_BASE_URL}/wishlist/?user_id=${userId}&product_id=${productId}`,
     { method: "POST" }

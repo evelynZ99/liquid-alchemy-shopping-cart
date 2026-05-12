@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../App.css";
 import {
   fetchProducts,
@@ -10,8 +10,11 @@ import {
   clearCart,
 } from "../services/api";
 import { getCurrentUser } from "../utils/auth";
+import DevLoginButton from "../components/DevLoginButton";
+import { flavourMeta, hasFlavour, getProductSizeLabel } from "../utils/flavourData";
 
 const Home = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -145,20 +148,8 @@ const Home = () => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  const flavourMeta = {
-    "Cucumber Salad Single": { level: 40, sweet: 20, sour: 65, note: "Savory & bright" },
-    "Pineappu Beach Single": { level: 55, sweet: 75, sour: 60, note: "Sweet & sour" },
-    "Shima Fizzy Kit": { level: 45, sweet: 35, sour: 55, note: "Sparkling & saline" },
-    "Aesthetic Glassware Set": { level: 50, sweet: 50, sour: 50, note: "Serving ritual" },
-    "Smoky Chile & Honey": { level: 72, sweet: 60, sour: 52, note: "Smoky, spicy, honeyed" },
-    "Carrot Cake": { level: 58, sweet: 72, sour: 48, note: "Creamy, spiced, dessert-like" },
-    "Tomato Cobbler": { level: 38, sweet: 50, sour: 68, note: "Savory, fresh, bright" },
-    "Kicu In The Sidecar": { level: 55, sweet: 56, sour: 58, note: "Floral, citrus, rounded" },
-    "Shiozakura Collins": { level: 50, sweet: 46, sour: 64, note: "Refreshing, saline, sparkling" },
-  };
-
   const filteredProducts = products.filter((product) => {
-    if (product.category === "Glassware") return true;
+    if (!hasFlavour(product.category)) return true;
     const meta = flavourMeta[product.name] || { sour: 50, sweet: 50, level: 50 };
     return (
       Math.abs(meta.sour - filters.sour) <= 45 &&
@@ -178,23 +169,32 @@ const Home = () => {
       </div>
 
       <header className="site-header">
-        <div className="brand">
+        <Link to="/" className="brand listing-brand">
           <span>LIQUID</span>
           <span>ALCHEMY</span>
-        </div>
+        </Link>
 
         <nav className="main-nav">
-          <span>New Releases</span>
-          <span>Cocktail Kits</span>
-          <span>Garnishes</span>
-          <span>Subscription</span>
-          <span>Laboratory</span>
+          <Link to="/products?category=Cocktails" className="nav-link">Cocktails</Link>
+          <Link to="/products?category=Kits" className="nav-link">Kits</Link>
+          <Link to="/products?category=Glassware" className="nav-link">Glassware</Link>
+          <Link to="/products?category=Bar Tools" className="nav-link">Bar Tools</Link>
+          <Link to="/laboratory" className="nav-link">Laboratory</Link>
         </nav>
 
-        <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>
-          <span className="cart-icon">👜</span>
-          <span className="cart-count">{totalItems}</span>
-        </button>
+        <div className="header-actions">
+          <Link to="/wishlist" className="nav-link">Wishlist</Link>
+          {currentUser ? (
+            <Link to="/account" className="nav-link">{currentUser.username}</Link>
+          ) : (
+            <Link to="/login" className="nav-link">Login / Sign up</Link>
+          )}
+          <DevLoginButton />
+          <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>
+            <span className="cart-icon">👜</span>
+            <span className="cart-count">{totalItems}</span>
+          </button>
+        </div>
       </header>
 
       <main className="main-content">
@@ -265,7 +265,9 @@ const Home = () => {
               <h2>Collection</h2>
               <p>Experimental blends, glassware, and ritual objects.</p>
             </div>
-            <span>{filteredProducts.length} products</span>
+            <Link to="/products" className="view-all-link">
+              View all products →
+            </Link>
           </div>
 
           {error && <div className="error-box">{error}</div>}
@@ -280,30 +282,40 @@ const Home = () => {
                 };
                 return (
                   <article className="product-card" key={product.id}>
-                    <div className="product-image-wrap">
+                    <div
+                      className="product-image-wrap product-image-wrap--link"
+                      onClick={() => navigate(`/products/${product.id}`)}
+                    >
                       <img src={product.image_url} alt={product.name} className="product-image" />
                     </div>
                     <div className="product-card-body">
-                      <h3>{product.name}</h3>
-                      <p className="product-size">
-                        {product.category === "Glassware" ? "Signature set" : "100ml flask"}
-                      </p>
+                      <h3
+                        className="product-name-link"
+                        onClick={() => navigate(`/products/${product.id}`)}
+                      >
+                        {product.name}
+                      </h3>
+                      <p className="product-size">{getProductSizeLabel(product.category)}</p>
                       <p className="product-description">{product.description}</p>
-                      <div className="flavour-scale">
-                        <div>
-                          <span>Level</span>
-                          <div className="scale-line"><i style={{ left: `${meta.level}%` }} /></div>
-                        </div>
-                        <div>
-                          <span>Sweet</span>
-                          <div className="scale-line"><i style={{ left: `${meta.sweet}%` }} /></div>
-                        </div>
-                        <div>
-                          <span>Sour</span>
-                          <div className="scale-line"><i style={{ left: `${meta.sour}%` }} /></div>
-                        </div>
-                      </div>
-                      <p className="product-note">{meta.note}</p>
+                      {hasFlavour(product.category) && (
+                        <>
+                          <div className="flavour-scale">
+                            <div>
+                              <span>Level</span>
+                              <div className="scale-line"><i style={{ left: `${meta.level}%` }} /></div>
+                            </div>
+                            <div>
+                              <span>Sweet</span>
+                              <div className="scale-line"><i style={{ left: `${meta.sweet}%` }} /></div>
+                            </div>
+                            <div>
+                              <span>Sour</span>
+                              <div className="scale-line"><i style={{ left: `${meta.sour}%` }} /></div>
+                            </div>
+                          </div>
+                          <p className="product-note">{meta.note}</p>
+                        </>
+                      )}
                       <p className="product-price">${product.price.toFixed(2)}</p>
                       <button className="ghost-button" onClick={() => handleAddToCart(product.id)}>
                         Add to cart
