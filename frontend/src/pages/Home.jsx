@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../App.css";
+
 import {
   fetchProducts,
   fetchCart,
@@ -10,14 +11,9 @@ import {
   clearCart,
 } from "../services/api";
 
-function getStoredCurrentUser() {
-  try {
-    const savedUser = localStorage.getItem("liquidAlchemyCurrentUser");
-    return savedUser ? JSON.parse(savedUser) : null;
-  } catch {
-    return null;
-  }
-}
+import { getCurrentUser } from "../utils/auth";
+import DevLoginButton from "../components/DevLoginButton";
+import { flavourMeta, hasFlavour, getProductSizeLabel } from "../utils/flavourData";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -29,7 +25,7 @@ const Home = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // 当前用户：未登录也可以浏览主页，但不能操作个人购物车
-  const currentUser = getStoredCurrentUser();
+  const currentUser = getCurrentUser();
   const userId = currentUser?.id;
   function handleAccountEntry() {
   if (!currentUser) {
@@ -180,20 +176,8 @@ const Home = () => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  const flavourMeta = {
-    "Cucumber Salad Single": { level: 40, sweet: 20, sour: 65, note: "Savory & bright" },
-    "Pineappu Beach Single": { level: 55, sweet: 75, sour: 60, note: "Sweet & sour" },
-    "Shima Fizzy Kit": { level: 45, sweet: 35, sour: 55, note: "Sparkling & saline" },
-    "Aesthetic Glassware Set": { level: 50, sweet: 50, sour: 50, note: "Serving ritual" },
-    "Smoky Chile & Honey": { level: 72, sweet: 60, sour: 52, note: "Smoky, spicy, honeyed" },
-    "Carrot Cake": { level: 58, sweet: 72, sour: 48, note: "Creamy, spiced, dessert-like" },
-    "Tomato Cobbler": { level: 38, sweet: 50, sour: 68, note: "Savory, fresh, bright" },
-    "Kicu In The Sidecar": { level: 55, sweet: 56, sour: 58, note: "Floral, citrus, rounded" },
-    "Shiozakura Collins": { level: 50, sweet: 46, sour: 64, note: "Refreshing, saline, sparkling" },
-  };
-
   const filteredProducts = products.filter((product) => {
-    if (product.category === "Glassware") return true;
+    if (!hasFlavour(product.category)) return true;
     const meta = flavourMeta[product.name] || { sour: 50, sweet: 50, level: 50 };
     return (
       Math.abs(meta.sour - filters.sour) <= 45 &&
@@ -213,55 +197,58 @@ const Home = () => {
       </div>
 
       <header className="site-header">
-        <div className="brand">
+        <Link to="/" className="brand listing-brand">
           <span>LIQUID</span>
           <span>ALCHEMY</span>
-        </div>
+        </Link>
 
         <nav className="main-nav">
-          <span>New Releases</span>
-          <span>Cocktail Kits</span>
-          <span>Garnishes</span>
-          <span>Subscription</span>
-          <span>Laboratory</span>
+          <Link to="/products?category=Cocktails" className="nav-link">Cocktails</Link>
+          <Link to="/products?category=Kits" className="nav-link">Kits</Link>
+          <Link to="/products?category=Glassware" className="nav-link">Glassware</Link>
+          <Link to="/products?category=Bar Tools" className="nav-link">Bar Tools</Link>
+          <Link to="/laboratory" className="nav-link">Laboratory</Link>
         </nav>
 
         <div className="header-actions">
-          {/* Account / Profile 入口 */}
-          <button
-  type="button"
-  className="account-icon-link"
-  aria-label="Open account page"
-  onClick={handleAccountEntry}
->
-  <span className="account-icon">
-    <svg
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      aria-hidden="true"
-    >
-      <path
-        d="M12 12c2.35 0 4.25-1.9 4.25-4.25S14.35 3.5 12 3.5 7.75 5.4 7.75 7.75 9.65 12 12 12Z"
-        fill="currentColor"
-      />
-      <path
-        d="M4.75 20.25c.65-3.45 3.52-5.75 7.25-5.75s6.6 2.3 7.25 5.75"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  </span>
-</button>
+  <Link to="/wishlist" className="nav-link">Wishlist</Link>
 
-          {/* 购物车入口 */}
-          <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>
-            <span className="cart-icon">👜</span>
-            <span className="cart-count">{totalItems}</span>
-          </button>
-        </div>
+  {/* Account / Profile 入口 */}
+  <button
+    type="button"
+    className="account-icon-link"
+    aria-label="Open account page"
+    onClick={handleAccountEntry}
+  >
+    <span className="account-icon">
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        aria-hidden="true"
+      >
+        <path
+          d="M12 12c2.35 0 4.25-1.9 4.25-4.25S14.35 3.5 12 3.5 7.75 5.4 7.75 7.75 9.65 12 12 12Z"
+          fill="currentColor"
+        />
+        <path
+          d="M4.75 20.25c.65-3.45 3.52-5.75 7.25-5.75s6.6 2.3 7.25 5.75"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    </span>
+  </button>
+
+  <DevLoginButton />
+
+  <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>
+    <span className="cart-icon">👜</span>
+    <span className="cart-count">{totalItems}</span>
+  </button>
+</div>
       </header>
 
       <main className="main-content">
@@ -339,7 +326,9 @@ const Home = () => {
               <h2>Collection</h2>
               <p>Experimental blends, glassware, and ritual objects.</p>
             </div>
-            <span>{filteredProducts.length} products</span>
+            <Link to="/products" className="view-all-link">
+              View all products →
+            </Link>
           </div>
 
           {error && <div className="error-box">{error}</div>}
@@ -358,30 +347,40 @@ const Home = () => {
 
                 return (
                   <article className="product-card" key={product.id}>
-                    <div className="product-image-wrap">
+                    <div
+                      className="product-image-wrap product-image-wrap--link"
+                      onClick={() => navigate(`/products/${product.id}`)}
+                    >
                       <img src={product.image_url} alt={product.name} className="product-image" />
                     </div>
                     <div className="product-card-body">
-                      <h3>{product.name}</h3>
-                      <p className="product-size">
-                        {product.category === "Glassware" ? "Signature set" : "100ml flask"}
-                      </p>
+                      <h3
+                        className="product-name-link"
+                        onClick={() => navigate(`/products/${product.id}`)}
+                      >
+                        {product.name}
+                      </h3>
+                      <p className="product-size">{getProductSizeLabel(product.category)}</p>
                       <p className="product-description">{product.description}</p>
-                      <div className="flavour-scale">
-                        <div>
-                          <span>Level</span>
-                          <div className="scale-line"><i style={{ left: `${meta.level}%` }} /></div>
-                        </div>
-                        <div>
-                          <span>Sweet</span>
-                          <div className="scale-line"><i style={{ left: `${meta.sweet}%` }} /></div>
-                        </div>
-                        <div>
-                          <span>Sour</span>
-                          <div className="scale-line"><i style={{ left: `${meta.sour}%` }} /></div>
-                        </div>
-                      </div>
-                      <p className="product-note">{meta.note}</p>
+                      {hasFlavour(product.category) && (
+                        <>
+                          <div className="flavour-scale">
+                            <div>
+                              <span>Level</span>
+                              <div className="scale-line"><i style={{ left: `${meta.level}%` }} /></div>
+                            </div>
+                            <div>
+                              <span>Sweet</span>
+                              <div className="scale-line"><i style={{ left: `${meta.sweet}%` }} /></div>
+                            </div>
+                            <div>
+                              <span>Sour</span>
+                              <div className="scale-line"><i style={{ left: `${meta.sour}%` }} /></div>
+                            </div>
+                          </div>
+                          <p className="product-note">{meta.note}</p>
+                        </>
+                      )}
                       <p className="product-price">${product.price.toFixed(2)}</p>
                       <button className="ghost-button" onClick={() => handleAddToCart(product.id)}>
                         Add to cart
@@ -475,7 +474,13 @@ const Home = () => {
                   <span>Subtotal ({totalItems} items)</span>
                   <strong>${totalPrice.toFixed(2)}</strong>
                 </div>
-                <button className="checkout-button">Go to cart</button>
+                {/* 保留你的 navigate 逻辑，Selia 的版本按钮没有 onClick */}
+                <button
+                  className="checkout-button"
+                  onClick={() => { setIsCartOpen(false); navigate('/cart'); }}
+                >
+                  Go to cart
+                </button>
                 <button className="secondary-button clear-cart-button" onClick={handleClearCart}>
                   Clear cart
                 </button>

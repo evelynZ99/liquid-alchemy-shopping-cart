@@ -4,12 +4,14 @@ import Home from "./pages/Home";
 import ProductListing from "./pages/ProductListing";
 import ProductDetail from "./pages/ProductDetail";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Wishlist from "./pages/Wishlist";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
+import Laboratory from "./pages/Laboratory";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -88,9 +90,9 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 登录页面：包含年龄验证、普通登录、Create Account */}
+        {/* 登录 / 注册页面 */}
         <Route path="/login" element={<Login />} />
-
+        <Route path="/signup" element={<Signup />} />
 
         {/* 普通浏览页面：只需要年龄验证，不强制登录 */}
         <Route
@@ -116,6 +118,15 @@ const App = () => {
           element={
             <AgeVerifiedRoute>
               <ProductDetail />
+            </AgeVerifiedRoute>
+          }
+        />
+
+        <Route
+          path="/laboratory"
+          element={
+            <AgeVerifiedRoute>
+              <Laboratory />
             </AgeVerifiedRoute>
           }
         />

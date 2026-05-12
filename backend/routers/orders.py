@@ -1,10 +1,9 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 from db import engine
 from deps import require_admin
-from models import Order, OrderItem, Product, User
-from sqlmodel import SQLModel
+from models import Order, OrderItem, CartItem, Product, User
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -16,62 +15,69 @@ class OrderItemInput(SQLModel):
 
 class OrderCreate(SQLModel):
     user_id: int
+    shipping_name: str
+    shipping_address: str
+    shipping_method: str
+    subtotal: float
+    shipping_cost: float
+    tax: float
+    total: float
     items: List[OrderItemInput]
 
 
-class OrderItemPublic(SQLModel):
-    product_id: int
-    quantity: int
-    price_at_purchase: float
-    name: str
-
-
-class OrderPublic(SQLModel):
-    id: int
-    user_id: int
-    total_price: float
-    status: str
-    created_at: str
-    items: List[OrderItemPublic]
-
-
 @router.post("/")
-def create_order(order_in: OrderCreate):
-    if not order_in.items:
+def create_order(data: OrderCreate):
+    if not data.items:
         raise HTTPException(status_code=400, detail="Order must include items")
 
     with Session(engine) as session:
-        user = session.get(User, order_in.user_id)
+        user = session.get(User, data.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        total_price = 0.0
-        order_items = []
 
-        for item in order_in.items:
+        for item in data.items:
             product = session.get(Product, item.product_id)
             if not product:
-                raise HTTPException(status_code=404, detail="Product not found")
-            price = product.price
-            total_price += price * item.quantity
-            order_items.append((product, price, item.quantity))
+                raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
 
-        order = Order(user_id=order_in.user_id, total_price=total_price)
+        order = Order(
+            user_id=data.user_id,
+            total_price=data.total,
+            status="confirmed"
+        )
         session.add(order)
         session.commit()
         session.refresh(order)
 
-        for product, price, quantity in order_items:
-            session.add(
-                OrderItem(
-                    order_id=order.id,
-                    product_id=product.id,
-                    quantity=quantity,
-                    price_at_purchase=price,
-                )
-            )
+        for item in data.items:
+            product = session.get(Product, item.product_id)
+            session.add(OrderItem(
+                order_id=order.id,
+                product_id=item.product_id,
+                quantity=item.quantity,
+                price_at_purchase=product.price
+            ))
+
+        cart_items = session.exec(
+            select(CartItem).where(CartItem.user_id == data.user_id)
+        ).all()
+        for cart_item in cart_items:
+            session.delete(cart_item)
 
         session.commit()
-        return {"message": "Order created", "order_id": order.id}
+
+        return {
+            "id": order.id,
+            "user_id": order.user_id,
+            "total_price": order.total_price,
+            "status": order.status,
+            "shipping_name": data.shipping_name,
+            "shipping_address": data.shipping_address,
+            "shipping_method": data.shipping_method,
+            "subtotal": data.subtotal,
+            "shipping_cost": data.shipping_cost,
+            "tax": data.tax,
+        }
 
 
 @router.get("/{order_id}")
@@ -87,14 +93,12 @@ def get_order(order_id: int):
         result_items = []
         for item in items:
             product = session.get(Product, item.product_id)
-            result_items.append(
-                {
-                    "product_id": item.product_id,
-                    "quantity": item.quantity,
-                    "price_at_purchase": item.price_at_purchase,
-                    "name": product.name if product else "",
-                }
-            )
+            result_items.append({
+                "product_id": item.product_id,
+                "quantity": item.quantity,
+                "price_at_purchase": item.price_at_purchase,
+                "name": product.name if product else "",
+            })
 
         return {
             "id": order.id,
@@ -109,7 +113,9 @@ def get_order(order_id: int):
 @router.get("/user/{user_id}")
 def get_user_orders(user_id: int):
     with Session(engine) as session:
-        orders = session.exec(select(Order).where(Order.user_id == user_id)).all()
+        orders = session.exec(
+            select(Order).where(Order.user_id == user_id)
+        ).all()
         return [
             {
                 "id": order.id,
