@@ -21,8 +21,9 @@ const Home = () => {
   const [loadingCart, setLoadingCart] = useState(true);
   const [error, setError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const navigate = useNavigate();
   const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
+  const userId = currentUser?.id ?? 1; // TODO: 测试用，登录功能完成后改回const userId = currentUser?.id
 
   const [filters, setFilters] = useState({
     sour: 50,
@@ -406,7 +407,13 @@ const Home = () => {
                   <span>Subtotal ({totalItems} items)</span>
                   <strong>${totalPrice.toFixed(2)}</strong>
                 </div>
-                <button className="checkout-button">Go to cart</button>
+                {/* 保留你的 navigate 逻辑，Selia 的版本按钮没有 onClick */}
+                <button
+                  className="checkout-button"
+                  onClick={() => { setIsCartOpen(false); navigate('/cart'); }}
+                >
+                  Go to cart
+                </button>
                 <button className="secondary-button clear-cart-button" onClick={handleClearCart}>
                   Clear cart
                 </button>
