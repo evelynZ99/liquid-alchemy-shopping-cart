@@ -140,6 +140,20 @@ export async function fetchUser(userId) {
   return response.json();
 }
 
+export async function updatePassword(userId, currentPassword, newPassword) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/password`, {
+    method: "PATCH",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+  if (!response.ok) throw new Error("Failed to update password");
+  return response.json();
+}
+
 export async function fetchUsers(adminUserId) {
   const response = await fetch(`${API_BASE_URL}/users/`, {
     headers: adminHeaders(adminUserId),

@@ -2,7 +2,7 @@ import os
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from db import engine
-from models import User, UserCreate, UserLogin, UserPublic, UserRoleUpdate
+from models import User, UserCreate, UserLogin, UserPublic, UserRoleUpdate, UserPasswordUpdate
 from security import hash_password, verify_password
 from deps import require_admin
 
@@ -57,6 +57,30 @@ def get_user(user_id: int):
             raise HTTPException(status_code=404, detail="User not found")
         return UserPublic.model_validate(user)
 
+@router.patch("/{user_id}/password", response_model=UserPublic)
+def update_user_password(user_id: int, password_update: UserPasswordUpdate):
+    with Session(engine) as session:
+        user = session.get(User, user_id)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not verify_password(password_update.current_password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+        if len(password_update.new_password) < 6:
+            raise HTTPException(
+                status_code=400,
+                detail="New password must be at least 6 characters"
+            )
+
+        user.password_hash = hash_password(password_update.new_password)
+
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
+        return UserPublic.model_validate(user)
 
 @router.get("/", response_model=list[UserPublic])
 def list_users(admin_user: User = Depends(require_admin)):

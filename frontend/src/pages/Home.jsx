@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../App.css";
+
 import {
   fetchProducts,
   fetchCart,
@@ -9,6 +10,7 @@ import {
   deleteCartItem,
   clearCart,
 } from "../services/api";
+
 import { getCurrentUser } from "../utils/auth";
 import DevLoginButton from "../components/DevLoginButton";
 import { flavourMeta, hasFlavour, getProductSizeLabel } from "../utils/flavourData";
@@ -21,8 +23,23 @@ const Home = () => {
   const [loadingCart, setLoadingCart] = useState(true);
   const [error, setError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // 当前用户：未登录也可以浏览主页，但不能操作个人购物车
   const currentUser = getCurrentUser();
   const userId = currentUser?.id;
+  function handleAccountEntry() {
+  if (!currentUser) {
+    navigate("/login");
+    return;
+  }
+
+  if (currentUser.is_admin || currentUser.role === "admin") {
+    navigate("/admin");
+    return;
+  }
+
+  navigate("/account");
+}
 
   const [filters, setFilters] = useState({
     sour: 50,
@@ -48,6 +65,7 @@ const Home = () => {
       setLoadingCart(false);
       return;
     }
+
     try {
       setLoadingCart(true);
       const data = await fetchCart(userId);
@@ -62,15 +80,17 @@ const Home = () => {
   useEffect(() => {
     loadProducts();
     loadCart();
-  }, []);
+  }, [userId]);
 
   async function handleAddToCart(productId) {
     try {
       setError("");
+
       if (!userId) {
-        setError("Please log in to add items to cart.");
+        setError("Please sign in to add items to your cart.");
         return;
       }
+
       await addToCart(userId, productId, 1);
       await loadCart();
       setIsCartOpen(true);
@@ -82,10 +102,12 @@ const Home = () => {
   async function handleIncrease(item) {
     try {
       setError("");
+
       if (!userId) {
-        setError("Please log in to update cart.");
+        setError("Please sign in to update your cart.");
         return;
       }
+
       await updateCartItem(userId, item.cart_item_id, item.quantity + 1);
       await loadCart();
     } catch (err) {
@@ -96,15 +118,18 @@ const Home = () => {
   async function handleDecrease(item) {
     try {
       setError("");
+
       if (!userId) {
-        setError("Please log in to update cart.");
+        setError("Please sign in to update your cart.");
         return;
       }
+
       if (item.quantity <= 1) {
         await deleteCartItem(userId, item.cart_item_id);
       } else {
         await updateCartItem(userId, item.cart_item_id, item.quantity - 1);
       }
+
       await loadCart();
     } catch (err) {
       setError("Failed to update item quantity.");
@@ -114,10 +139,12 @@ const Home = () => {
   async function handleRemove(cartItemId) {
     try {
       setError("");
+
       if (!userId) {
-        setError("Please log in to update cart.");
+        setError("Please sign in to update your cart.");
         return;
       }
+
       await deleteCartItem(userId, cartItemId);
       await loadCart();
     } catch (err) {
@@ -128,10 +155,12 @@ const Home = () => {
   async function handleClearCart() {
     try {
       setError("");
+
       if (!userId) {
-        setError("Please log in to update cart.");
+        setError("Please sign in to update your cart.");
         return;
       }
+
       await clearCart(userId);
       await loadCart();
     } catch (err) {
@@ -182,18 +211,44 @@ const Home = () => {
         </nav>
 
         <div className="header-actions">
-          <Link to="/wishlist" className="nav-link">Wishlist</Link>
-          {currentUser ? (
-            <Link to="/account" className="nav-link">{currentUser.username}</Link>
-          ) : (
-            <Link to="/login" className="nav-link">Login / Sign up</Link>
-          )}
-          <DevLoginButton />
-          <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>
-            <span className="cart-icon">👜</span>
-            <span className="cart-count">{totalItems}</span>
-          </button>
-        </div>
+  <Link to="/wishlist" className="nav-link">Wishlist</Link>
+
+  {/* Account / Profile 入口 */}
+  <button
+    type="button"
+    className="account-icon-link"
+    aria-label="Open account page"
+    onClick={handleAccountEntry}
+  >
+    <span className="account-icon">
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        aria-hidden="true"
+      >
+        <path
+          d="M12 12c2.35 0 4.25-1.9 4.25-4.25S14.35 3.5 12 3.5 7.75 5.4 7.75 7.75 9.65 12 12 12Z"
+          fill="currentColor"
+        />
+        <path
+          d="M4.75 20.25c.65-3.45 3.52-5.75 7.25-5.75s6.6 2.3 7.25 5.75"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    </span>
+  </button>
+
+  <DevLoginButton />
+
+  <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>
+    <span className="cart-icon">👜</span>
+    <span className="cart-count">{totalItems}</span>
+  </button>
+</div>
       </header>
 
       <main className="main-content">
@@ -208,9 +263,7 @@ const Home = () => {
             <button
               className="hero-cta"
               onClick={() =>
-                document.querySelector(".collection-section")?.scrollIntoView({
-                  behavior: "smooth",
-                })
+                document.querySelector(".collection-section")?.scrollIntoView({ behavior: "smooth" })
               }
             >
               Explore seasonal flavours <span>→</span>
@@ -232,7 +285,10 @@ const Home = () => {
             <div className="matrix-control">
               <label>Sour</label>
               <input
-                type="range" min="0" max="100" value={filters.sour}
+                type="range"
+                min="0"
+                max="100"
+                value={filters.sour}
                 onChange={(e) => setFilters((prev) => ({ ...prev, sour: Number(e.target.value) }))}
               />
               <span>{filters.sour}</span>
@@ -241,7 +297,10 @@ const Home = () => {
             <div className="matrix-control">
               <label>Sweet</label>
               <input
-                type="range" min="0" max="100" value={filters.sweet}
+                type="range"
+                min="0"
+                max="100"
+                value={filters.sweet}
                 onChange={(e) => setFilters((prev) => ({ ...prev, sweet: Number(e.target.value) }))}
               />
               <span>{filters.sweet}</span>
@@ -250,7 +309,10 @@ const Home = () => {
             <div className="matrix-control">
               <label>Level</label>
               <input
-                type="range" min="0" max="100" value={filters.level}
+                type="range"
+                min="0"
+                max="100"
+                value={filters.level}
                 onChange={(e) => setFilters((prev) => ({ ...prev, level: Number(e.target.value) }))}
               />
               <span>{filters.level}</span>
@@ -277,8 +339,12 @@ const Home = () => {
             <div className="product-grid">
               {filteredProducts.map((product) => {
                 const meta = flavourMeta[product.name] || {
-                  level: 50, sweet: 50, sour: 50, note: "Balanced profile",
+                  level: 50,
+                  sweet: 50,
+                  sour: 50,
+                  note: "Balanced profile",
                 };
+
                 return (
                   <article className="product-card" key={product.id}>
                     <div
@@ -358,7 +424,9 @@ const Home = () => {
           {loadingCart ? (
             <p className="status-text drawer-status">Loading cart...</p>
           ) : cart.length === 0 ? (
-            <div className="empty-cart"><p>Your cart is empty</p></div>
+            <div className="empty-cart">
+              <p>{userId ? "Your cart is empty" : "Sign in to save products to your cart."}</p>
+            </div>
           ) : (
             <>
               <div className="cart-list">
@@ -426,6 +494,6 @@ const Home = () => {
       </aside>
     </div>
   );
-}
+};
 
 export default Home;
