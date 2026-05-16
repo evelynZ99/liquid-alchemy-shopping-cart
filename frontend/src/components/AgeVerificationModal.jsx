@@ -25,7 +25,7 @@ const AgeVerificationModal = ({ onApprove, onReject, rejected }) => {
           <h1>Are you of legal drinking age?</h1>
 
           <p className="age-description">
-            You must be at least 18 years old to enter the Liquid Alchemy
+            You must be at least 21 years old to enter the Liquid Alchemy
             laboratory. We advocate for responsible and discerning consumption.
           </p>
 
@@ -38,7 +38,7 @@ const AgeVerificationModal = ({ onApprove, onReject, rejected }) => {
               onClick={() => handleButtonPress("yes", onApprove)}
               disabled={rejected}
             >
-              I AM 18+
+              I AM 21+
             </button>
 
             <button

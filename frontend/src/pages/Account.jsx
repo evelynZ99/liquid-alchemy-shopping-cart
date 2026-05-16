@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchUser, fetchUserOrders, updatePassword } from "../services/api";
+import "../App.css";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -15,7 +16,6 @@ const Account = () => {
   const [error, setError] = useState("");
 
   const [settings, setSettings] = useState({
-    twoFactor: true,
     newsletter: true,
     orderUpdates: true,
   });
@@ -84,8 +84,7 @@ const Account = () => {
   const displayName =
     userDetail?.username || currentUser?.username || "Alchemy Guest";
 
-  const email =
-    userDetail?.email || currentUser?.email || "guest@alchemy.com";
+  const email = userDetail?.email || currentUser?.email || "guest@alchemy.com";
 
   const roleLabel =
     userDetail?.is_admin || currentUser?.role === "admin"
@@ -132,6 +131,8 @@ const Account = () => {
   function handlePasswordChange(event) {
     const { name, value } = event.target;
 
+    setNotice("");
+
     setPasswordForm((prev) => ({
       ...prev,
       [name]: value,
@@ -139,46 +140,46 @@ const Account = () => {
   }
 
   async function handleUpdatePassword(event) {
-  event.preventDefault();
-  setNotice("");
+    event.preventDefault();
+    setNotice("");
 
-  if (
-    !passwordForm.currentPassword ||
-    !passwordForm.newPassword ||
-    !passwordForm.confirmPassword
-  ) {
-    setNotice("Please complete all password fields.");
-    return;
+    if (
+      !passwordForm.currentPassword ||
+      !passwordForm.newPassword ||
+      !passwordForm.confirmPassword
+    ) {
+      setNotice("Please complete all password fields.");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      setNotice("New password must be at least 6 characters.");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setNotice("New password and confirmation do not match.");
+      return;
+    }
+
+    try {
+      await updatePassword(
+        userId,
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setNotice("Password updated successfully.");
+    } catch (err) {
+      setNotice("Current password is incorrect or password update failed.");
+    }
   }
-
-  if (passwordForm.newPassword.length < 6) {
-    setNotice("New password must be at least 6 characters.");
-    return;
-  }
-
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    setNotice("New password and confirmation do not match.");
-    return;
-  }
-
-  try {
-    await updatePassword(
-      userId,
-      passwordForm.currentPassword,
-      passwordForm.newPassword
-    );
-
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-
-    setNotice("Password updated successfully.");
-  } catch (err) {
-    setNotice("Current password is incorrect or password update failed.");
-  }
-}
 
   function handleSavePreferences() {
     setNotice("Preferences saved locally for this prototype.");
@@ -186,7 +187,7 @@ const Account = () => {
 
   function handleConfirmSignOut() {
     localStorage.removeItem("liquidAlchemyCurrentUser");
-    navigate("/login");
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -259,7 +260,7 @@ const Account = () => {
         </aside>
 
         <section className="account-content">
-          {error && <div className="account-notice">{error}</div>}
+          {error && <div className="account-notice error">{error}</div>}
 
           {activePanel === "profile" && (
             <section className="account-panel">
@@ -271,78 +272,49 @@ const Account = () => {
               {loadingUser ? (
                 <p className="status-text">Loading profile...</p>
               ) : (
-                <>
-                  <div className="account-profile-grid">
-                    <div className="account-profile-card">
-                      <div className="account-profile-image">
-                        <div className="account-profile-avatar">
-                          {displayName.slice(0, 2).toUpperCase()}
-                        </div>
-                      </div>
-
-                      <div className="account-detail-grid">
-                        <div className="account-detail-item">
-                          <span>Account Name</span>
-                          <strong>{displayName}</strong>
-                        </div>
-
-                        <div className="account-detail-item">
-                          <span>Email Address</span>
-                          <strong>{email}</strong>
-                        </div>
-
-                        <div className="account-detail-item">
-                          <span>Account Role</span>
-                          <strong>{roleLabel}</strong>
-                        </div>
-
-                        <div className="account-detail-item">
-                          <span>Joined Date</span>
-                          <strong>{joinedDate}</strong>
-                        </div>
+                <div className="account-profile-grid">
+                  <div className="account-profile-card">
+                    <div className="account-profile-image">
+                      <div className="account-profile-avatar">
+                        {displayName.slice(0, 2).toUpperCase()}
                       </div>
                     </div>
 
-                    <aside className="account-highlight-card">
-                      <p>The Laboratory Box</p>
-                      <h2>Your account is ready for future personalized cocktail selections.</h2>
-                      <span>Order and subscription features can be connected later.</span>
-                      <button type="button">Manage Subscription</button>
-                    </aside>
-                  </div>
+                    <div className="account-detail-grid">
+                      <div className="account-detail-item">
+                        <span>Account Name</span>
+                        <strong>{displayName}</strong>
+                      </div>
 
-                  <div className="account-preference-row">
-                    <div>
-                      <strong>Two-Factor Authentication</strong>
-                      <span>Secure your account with an extra layer of security.</span>
+                      <div className="account-detail-item">
+                        <span>Email Address</span>
+                        <strong>{email}</strong>
+                      </div>
+
+                      <div className="account-detail-item">
+                        <span>Account Role</span>
+                        <strong>{roleLabel}</strong>
+                      </div>
+
+                      <div className="account-detail-item">
+                        <span>Joined Date</span>
+                        <strong>{joinedDate}</strong>
+                      </div>
                     </div>
-
-                    <button
-                      type="button"
-                      className={`account-switch ${settings.twoFactor ? "on" : ""}`}
-                      onClick={() => handleSettingToggle("twoFactor")}
-                      aria-label="Toggle two-factor authentication"
-                    >
-                      <span />
-                    </button>
                   </div>
 
-                  <div className="account-preference-row">
-                    <div>
-                      <strong>Newsletter Subscription</strong>
-                      <span>Receive updates on experimental releases and laboratory notes.</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      className={`account-switch ${settings.newsletter ? "on" : ""}`}
-                      onClick={() => handleSettingToggle("newsletter")}
-                      aria-label="Toggle newsletter subscription"
-                    >
-                      <span />
-                    </button>
-                  </div>
-                </>
+                  <aside className="account-highlight-card">
+                    <p>The Laboratory Box</p>
+                    <h2>
+                      Your account is ready for future personalized cocktail
+                      selections.
+                    </h2>
+                    <span>
+                      Order and subscription features can be connected later.
+                    </span>
+                    <button type="button">Manage Subscription</button>
+                  </aside>
+                </div>
               )}
             </section>
           )}
@@ -413,7 +385,10 @@ const Account = () => {
                 <h1>Laboratory Settings</h1>
               </div>
 
-              <form className="account-settings-section" onSubmit={handleUpdatePassword}>
+              <form
+                className="account-settings-section"
+                onSubmit={handleUpdatePassword}
+              >
                 <div className="account-section-copy">
                   <p>Access Control</p>
                   <h2>Update Password</h2>
@@ -458,7 +433,7 @@ const Account = () => {
                   </button>
                 </div>
               </form>
-              
+
               {notice && (
                 <div
                   className={`account-notice ${
@@ -486,7 +461,9 @@ const Account = () => {
                   >
                     <span>
                       <strong>Formula Laboratory Releases</strong>
-                      <small>Direct notification of new cocktail kit availability.</small>
+                      <small>
+                        Direct notification of new cocktail kit availability.
+                      </small>
                     </span>
                     <i />
                   </button>
@@ -500,7 +477,9 @@ const Account = () => {
                   >
                     <span>
                       <strong>Operational Updates</strong>
-                      <small>Critical account and shipping status notifications.</small>
+                      <small>
+                        Critical account and shipping status notifications.
+                      </small>
                     </span>
                     <i />
                   </button>
@@ -526,8 +505,6 @@ const Account = () => {
 
                 <button type="button">Deactivate Laboratory Profile</button>
               </div>
-
-              
             </section>
           )}
         </section>
@@ -550,7 +527,8 @@ const Account = () => {
             <p>Account Exit</p>
             <h2>Are you sure you want to sign out?</h2>
             <span>
-              You will need to sign in again to access your profile and order history.
+              You will need to sign in again to access your profile and order
+              history.
             </span>
 
             <div className="account-modal-actions">

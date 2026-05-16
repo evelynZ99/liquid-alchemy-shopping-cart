@@ -1,14 +1,12 @@
-/**
- * User authentication utilities
- * Login/Signup logic is handled by groupmate
- * This module manages user session in localStorage and admin role checking
- */
-
-const USER_STORAGE_KEY = "liquidAlchemyUser";
+const USER_STORAGE_KEY = "liquidAlchemyCurrentUser";
+const LEGACY_USER_STORAGE_KEY = "liquidAlchemyUser";
 
 export function getCurrentUser() {
   try {
-    const userJson = localStorage.getItem(USER_STORAGE_KEY);
+    const userJson =
+      localStorage.getItem(USER_STORAGE_KEY) ||
+      localStorage.getItem(LEGACY_USER_STORAGE_KEY);
+
     return userJson ? JSON.parse(userJson) : null;
   } catch {
     return null;
@@ -17,15 +15,17 @@ export function getCurrentUser() {
 
 export function setCurrentUser(user) {
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
 }
 
 export function clearCurrentUser() {
-  localStorage.removeItem("liquidAlchemyCurrentUser");
+  localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
   localStorage.removeItem("currentUser");
 }
 
 export function isAdminUser(user) {
-  return user && user.is_admin === true;
+  return user && (user.is_admin === true || user.role === "admin");
 }
 
 export function isUserLoggedIn() {
