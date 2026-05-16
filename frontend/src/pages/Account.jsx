@@ -303,17 +303,7 @@ const Account = () => {
                     </div>
                   </div>
 
-                  <aside className="account-highlight-card">
-                    <p>The Laboratory Box</p>
-                    <h2>
-                      Your account is ready for future personalized cocktail
-                      selections.
-                    </h2>
-                    <span>
-                      Order and subscription features can be connected later.
-                    </span>
-                    <button type="button">Manage Subscription</button>
-                  </aside>
+                  
                 </div>
               )}
             </section>

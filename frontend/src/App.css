@@ -1592,7 +1592,7 @@ button {
 
 .account-profile-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: 1fr;
   gap: 46px;
   align-items: start;
 }
@@ -1675,64 +1675,6 @@ button {
 
 .account-detail-item button:active {
   transform: translateY(2px);
-}
-
-.account-highlight-card {
-  background: #171819;
-  color: #fff;
-  padding: 34px;
-  min-width: 0;
-}
-
-.account-highlight-card p {
-  font-family: "Times New Roman", serif;
-  font-size: 26px;
-  line-height: 1.15;
-  margin: 0 0 26px;
-}
-
-.account-highlight-card h2 {
-  font-size: 16px;
-  line-height: 1.55;
-  font-weight: 400;
-  margin: 0 0 12px;
-}
-
-.account-highlight-card span {
-  display: block;
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.45;
-  margin-bottom: 28px;
-}
-
-.account-highlight-card button,
-.account-dark-button {
-  border: 1px solid #171819;
-  background: #171819;
-  color: #fff;
-  min-height: 50px;
-  padding: 14px 22px;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-  font-size: 12px;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.16s ease, opacity 0.16s ease;
-}
-
-.account-highlight-card button {
-  width: 100%;
-  border-color: rgba(255, 255, 255, 0.72);
-}
-
-.account-highlight-card button:hover,
-.account-dark-button:hover {
-  opacity: 0.84;
-}
-
-.account-highlight-card button:active,
-.account-dark-button:active,
-.account-outline-button:active {
-  transform: translateY(3px) scale(0.985);
-  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.28);
 }
 
 .account-dark-button.danger {
