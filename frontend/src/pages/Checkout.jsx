@@ -14,8 +14,7 @@ const Checkout = () => {
 
   const navigate = useNavigate()
   const currentUser = getCurrentUser()
-  const userId = currentUser?.id ?? 1; // TODO: 测试用，登录功能完成后改回const userId = currentUser?.id
-
+  const userId = currentUser?.id
 
   useEffect(() => {
     if (userId) fetchCart(userId).then(data => setCartItems(data))

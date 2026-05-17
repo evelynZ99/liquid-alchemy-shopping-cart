@@ -8,7 +8,6 @@ const Cart = () => {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const currentUser = getCurrentUser()
-  const userId = currentUser?.id ?? 1 // TODO: 测试用，登录功能完成后删掉这行
 
   useEffect(() => {
     fetchCart(userId)
