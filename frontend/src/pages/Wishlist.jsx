@@ -1,10 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  fetchWishlist, removeFromWishlist,
+  fetchWishlist, removeFromWishlist, fetchProducts,
   fetchCart, addToCart, updateCartItem, deleteCartItem, clearCart,
 } from '../services/api'
 import { getCurrentUser } from '../utils/auth'
+import {
+  getGuestCart, addToGuestCart, updateGuestCartItem,
+  removeFromGuestCart, clearGuestCart,
+  getGuestWishlist, toggleGuestWishlist, clearGuestWishlist,
+} from '../utils/guestCart'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
@@ -18,69 +23,125 @@ const Wishlist = () => {
   const currentUser = getCurrentUser()
   const userId = currentUser?.id
 
-  async function loadCart() {
-    if (!userId) { setCart([]); setLoadingCart(false); return }
+  async function loadCart(allProducts) {
+    if (!userId) {
+      const guestItems = getGuestCart()
+      if (guestItems.length === 0) { setCart([]); setLoadingCart(false); return }
+      const prods = allProducts || await fetchProducts()
+      setCart(guestItems.map(gi => {
+        const p = prods.find(p => p.id === gi.product_id)
+        if (!p) return null
+        return { cart_item_id: `guest-${p.id}`, product_id: p.id, name: p.name, price: p.price, image_url: p.image_url, quantity: gi.quantity, subtotal: p.price * gi.quantity }
+      }).filter(Boolean))
+      setLoadingCart(false)
+      return
+    }
     try {
       setLoadingCart(true)
       setCart(await fetchCart(userId))
     } catch {
-      // silently fail — cart drawer will just show empty
+      // silently fail
     } finally {
       setLoadingCart(false)
     }
   }
 
   useEffect(() => {
-    if (!userId) { setLoading(false); return }
-    fetchWishlist(userId)
-      .then(data => { setItems(data); setLoading(false) })
-      .catch(() => setLoading(false))
+    async function init() {
+      if (!userId) {
+        const guestWishlistIds = getGuestWishlist()
+        if (guestWishlistIds.length === 0) { setLoading(false); loadCart(); return }
+        const allProducts = await fetchProducts()
+        setItems(guestWishlistIds.map(pid => {
+          const p = allProducts.find(p => p.id === pid)
+          if (!p) return null
+          return { product_id: p.id, name: p.name, price: p.price, image_url: p.image_url, category: p.category }
+        }).filter(Boolean))
+        setLoading(false)
+        loadCart(allProducts)
+        return
+      }
+      fetchWishlist(userId)
+        .then(data => { setItems(data); setLoading(false) })
+        .catch(() => setLoading(false))
+      loadCart()
+    }
+    init()
   }, [userId])
-
-  useEffect(() => { loadCart() }, [userId])
 
   const totalPrice = useMemo(() => cart.reduce((s, i) => s + i.subtotal, 0), [cart])
   const totalItems = useMemo(() => cart.reduce((s, i) => s + i.quantity, 0), [cart])
 
-  const handleRemoveFromWishlist = (id) => {
-    removeFromWishlist(id).then(() => {
-      setItems(items.filter(item => item.id !== id))
+  const handleRemoveFromWishlist = (item) => {
+    if (!userId) {
+      toggleGuestWishlist(item.product_id)
+      setItems(prev => prev.filter(i => i.product_id !== item.product_id))
+      return
+    }
+    removeFromWishlist(item.id).then(() => {
+      setItems(prev => prev.filter(i => i.id !== item.id))
     })
   }
 
   async function handleAddToCart(item) {
-    if (!userId) return
+    if (!userId) {
+      addToGuestCart(item.product_id, 1)
+      await loadCart()
+      setIsCartOpen(true)
+      return
+    }
     await addToCart(userId, item.product_id, 1)
     await loadCart()
     setIsCartOpen(true)
   }
 
   async function handleIncrease(item) {
-    if (!userId) return
+    if (!userId) {
+      updateGuestCartItem(item.product_id, item.quantity + 1)
+      await loadCart()
+      return
+    }
     await updateCartItem(userId, item.cart_item_id, item.quantity + 1)
     await loadCart()
   }
 
   async function handleDecrease(item) {
-    if (!userId) return
+    if (!userId) {
+      updateGuestCartItem(item.product_id, item.quantity - 1)
+      await loadCart()
+      return
+    }
     if (item.quantity <= 1) await deleteCartItem(userId, item.cart_item_id)
     else await updateCartItem(userId, item.cart_item_id, item.quantity - 1)
     await loadCart()
   }
 
-  async function handleRemoveFromCart(cartItemId) {
-    if (!userId) return
+  async function handleRemoveFromCart(cartItemId, productId) {
+    if (!userId) {
+      removeFromGuestCart(productId)
+      await loadCart()
+      return
+    }
     await deleteCartItem(userId, cartItemId)
     await loadCart()
   }
 
   async function handleClearWishlist() {
+    if (!userId) {
+      clearGuestWishlist()
+      setItems([])
+      return
+    }
     await Promise.all(items.map(item => removeFromWishlist(item.id)))
     setItems([])
   }
 
   async function handleClearCart() {
-    if (!userId) return
+    if (!userId) {
+      clearGuestCart()
+      setCart([])
+      return
+    }
     await clearCart(userId)
     await loadCart()
   }
@@ -208,7 +269,7 @@ const Wishlist = () => {
                 </button>
 
                 <button
-                  onClick={() => handleRemoveFromWishlist(item.id)}
+                  onClick={() => handleRemoveFromWishlist(item)}
                   style={{
                     background: 'none', border: 'none', color: '#9c3d2b', cursor: 'pointer',
                     fontFamily: 'Inter', fontSize: '11px', textTransform: 'uppercase',
@@ -242,7 +303,7 @@ const Wishlist = () => {
             <p className="status-text drawer-status">Loading cart…</p>
           ) : cart.length === 0 ? (
             <div className="empty-cart">
-              <p>{userId ? 'Your cart is empty' : 'Sign in to save products to your cart.'}</p>
+              <p>Your cart is empty</p>
             </div>
           ) : (
             <>
@@ -262,7 +323,7 @@ const Wishlist = () => {
                         <span>{item.quantity}</span>
                         <button onClick={() => handleIncrease(item)}>+</button>
                       </div>
-                      <button className="text-button" onClick={() => handleRemoveFromCart(item.cart_item_id)}>
+                      <button className="text-button" onClick={() => handleRemoveFromCart(item.cart_item_id, item.product_id)}>
                         Remove
                       </button>
                     </div>

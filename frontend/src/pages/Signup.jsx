@@ -40,8 +40,8 @@ const Signup = () => {
       return;
     }
 
-    if (calculateAge(form.dateOfBirth) < 21) {
-      setError("You must be 21 or older to create an account.");
+    if (calculateAge(form.dateOfBirth) < 18) {
+      setError("You must be 18 or older to create an account.");
       return;
     }
 
@@ -109,7 +109,7 @@ const Signup = () => {
                   onChange={handleChange}
                   max={new Date().toISOString().split('T')[0]}
                 />
-                <span className="auth-field-hint">You must be 21 or older to register.</span>
+                <span className="auth-field-hint">You must be 18 or older to register.</span>
               </div>
 
               <div className="auth-field">

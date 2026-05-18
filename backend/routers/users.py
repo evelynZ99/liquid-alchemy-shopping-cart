@@ -65,8 +65,8 @@ def can_assign_admin(session: Session, admin_key: str | None) -> bool:
 
 @router.post("/register", response_model=UserPublic)
 def register(user_in: UserCreate):
-    if calculate_age(user_in.date_of_birth) < 21:
-        raise HTTPException(status_code=400, detail="You must be 21 or older to register")
+    if calculate_age(user_in.date_of_birth) < 18:
+        raise HTTPException(status_code=400, detail="You must be 18 or older to register")
 
     with Session(engine) as session:
         existing = session.exec(select(User).where(User.email == user_in.email)).first()

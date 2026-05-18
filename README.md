@@ -276,6 +276,13 @@ The interface draws from premium minimalist product design and editorial cocktai
 
 ---
 
-## Author
+## Team & Workload Allocation
 
-Evelyn Zhou — Internet Programming Assignment
+| Member | Responsibilities | Key Files |
+|---|---|---|
+| **Evelyn Zhou** | Product pages, Navbar, Footer, guest cart/wishlist, integration testing | `pages/Home.jsx`, `pages/ProductListing.jsx`, `pages/ProductDetail.jsx`, `components/Navbar.jsx`, `components/Footer.jsx`, `utils/guestCart.js`, `services/api.js`, `App.css` |
+| **Tianya** | Full admin panel (dashboard, products, users, orders, carts), product image upload | `pages/admin/AdminDashboard.jsx`, `pages/admin/AdminProducts.jsx`, `pages/admin/AdminUsers.jsx`, `pages/admin/AdminOrders.jsx`, `pages/admin/AdminCarts.jsx`, `components/admin/AdminLayout.jsx`, `components/admin/admin.css`, `routers/admin.py`, `main.py` |
+| **Jasmine** | Cart, Wishlist, Checkout, Payment Success, backend cart and wishlist routes | `pages/Cart.jsx`, `pages/Wishlist.jsx`, `pages/Checkout.jsx`, `pages/PaymentSuccess.jsx`, `routers/cart.py`, `routers/wishlist.py` |
+| **Chuanyao** | User authentication, Age Verification Modal, User Account page (Profile, Order History, Settings), backend user and order routes | `pages/Login.jsx`, `pages/Signup.jsx`, `pages/Account.jsx`, `components/AgeVerificationModal.jsx`, `routers/users.py`, `routers/orders.py`, `security.py`, `deps.py` |
+
+> Integration, final testing, and cross-member coordination were led by Evelyn.

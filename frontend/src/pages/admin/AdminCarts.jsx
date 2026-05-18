@@ -8,6 +8,15 @@ const AdminCarts = () => {
   const [carts, setCarts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedIds, setExpandedIds] = useState(new Set());
+
+  function toggleExpand(userId) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.has(userId) ? next.delete(userId) : next.add(userId);
+      return next;
+    });
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -47,24 +56,39 @@ const AdminCarts = () => {
         <p className="admin-muted">No active carts yet.</p>
       ) : (
         <div className="admin-carts">
-          {carts.map((cart) => (
-            <div className="admin-cart" key={cart.user_id}>
-              <h4>{cart.username}</h4>
-              <p className="admin-muted">{cart.email}</p>
-              <div className="admin-cart-items">
-                {cart.items.map((item) => (
-                  <div className="admin-cart-item" key={item.cart_item_id}>
-                    <span>{item.name}</span>
-                    <span>x{item.quantity}</span>
-                    <span>${item.subtotal.toFixed(2)}</span>
+          {carts.map((cart) => {
+            const isOpen = expandedIds.has(cart.user_id);
+            return (
+              <div className="admin-cart" key={cart.user_id}>
+                <button
+                  className="admin-cart-toggle"
+                  onClick={() => toggleExpand(cart.user_id)}
+                >
+                  <div className="admin-cart-toggle-left">
+                    <span className="admin-cart-username">{cart.username}</span>
+                    <span className="admin-muted">{cart.email}</span>
                   </div>
-                ))}
+                  <div className="admin-cart-toggle-right">
+                    <span className="admin-muted">{cart.items.length} item{cart.items.length !== 1 ? "s" : ""}</span>
+                    <span className="admin-cart-total">${cart.total.toFixed(2)}</span>
+                    <span className="admin-cart-chevron">{isOpen ? "▲" : "▼"}</span>
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div className="admin-cart-items">
+                    {cart.items.map((item) => (
+                      <div className="admin-cart-item" key={item.cart_item_id}>
+                        <span>{item.name}</span>
+                        <span>x{item.quantity}</span>
+                        <span>${item.subtotal.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="admin-muted" style={{ marginTop: "10px" }}>
-                Total: ${cart.total.toFixed(2)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </AdminLayout>
