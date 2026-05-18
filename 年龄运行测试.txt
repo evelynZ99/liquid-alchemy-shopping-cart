@@ -1,8 +1,0 @@
-F12
-输入allow pasting
-按 Enter。
-
-然后再粘贴这两行：
-
-localStorage.removeItem("liquidAlchemyAgeVerified");
-localStorage.removeItem("liquidAlchemyCurrentUser");

@@ -20,13 +20,13 @@ const AgeVerificationModal = ({ onApprove, onReject, rejected }) => {
         <div className="age-brand-line" />
 
         <div className="age-modal-content">
-          <p className="auth-kicker">AGE VERIFICATION REQUIRED</p>
+          <p className="auth-kicker">Age Verification</p>
 
           <h1>Are you of legal drinking age?</h1>
 
           <p className="age-description">
-            You must be at least 21 years old to enter the Liquid Alchemy
-            laboratory. We advocate for responsible and discerning consumption.
+            You must be 21 or older to enter. Liquid Alchemy advocates for
+            responsible and discerning consumption.
           </p>
 
           <div className="age-modal-actions">
@@ -43,12 +43,10 @@ const AgeVerificationModal = ({ onApprove, onReject, rejected }) => {
 
             <button
               type="button"
-              className={`auth-button auth-outline-button ${
-                pressedButton === "no" ? "is-pressed" : ""
-              }`}
+              className="age-exit-link"
               onClick={() => handleButtonPress("no", onReject)}
             >
-              EXIT
+              I am under 21 — Exit
             </button>
           </div>
 
@@ -58,11 +56,10 @@ const AgeVerificationModal = ({ onApprove, onReject, rejected }) => {
               prohibited.
             </div>
           )}
-        </div>
 
-        <div className="age-modal-footer">
-          <p>Liquid Alchemy promotes moderation. Please drink responsibly.</p>
-          <div className="age-footer-icons">⚗︎ ♢</div>
+          <p className="age-modal-note">
+            Please drink responsibly.
+          </p>
         </div>
       </section>
     </div>

@@ -199,16 +199,28 @@
 
 .admin-form {
   display: grid;
-  gap: 12px;
+  gap: 20px;
 }
 
 .admin-form input,
 .admin-form textarea,
 .admin-form select {
+  width: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--line);
   padding: 10px 12px;
   font-size: 14px;
   font-family: "Manrope", sans-serif;
+}
+
+.admin-form select {
+  padding-right: 40px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236e6a63' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
 }
 
 .admin-form textarea {
@@ -219,7 +231,7 @@
 .admin-form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  gap: 20px 16px;
 }
 
 .admin-pill {
@@ -280,6 +292,40 @@
   grid-template-columns: 1fr auto auto;
   gap: 12px;
   font-size: 14px;
+}
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(20, 19, 18, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.admin-modal-card {
+  background: #faf9f5;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+  padding: 36px 40px 32px;
+  width: min(480px, 100%);
+  animation: modalIn 0.25s ease both;
+}
+
+.admin-modal-card h3 {
+  font-family: "Newsreader", serif;
+  font-size: 28px;
+  margin: 0 0 24px;
+}
+
+.admin-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
 }
 
 @media (max-width: 900px) {

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCart, createOrder } from '../services/api'
 import { getCurrentUser } from '../utils/auth'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 const Checkout = () => {
   const [cartItems, setCartItems] = useState([])
@@ -17,7 +19,8 @@ const Checkout = () => {
   const userId = currentUser?.id
 
   useEffect(() => {
-    if (userId) fetchCart(userId).then(data => setCartItems(data))
+    if (!userId) { navigate('/login', { replace: true }); return; }
+    fetchCart(userId).then(data => setCartItems(data))
   }, [userId])
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -86,7 +89,8 @@ const Checkout = () => {
   }
 
   return (
-    <div style={{ backgroundColor: '#f6f5f1', minHeight: '100vh' }}>
+    <div className="alchemy-page" style={{ backgroundColor: '#f6f5f1', minHeight: '100vh' }}>
+      <Navbar />
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 56px' }}>
         <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
 
@@ -364,6 +368,7 @@ const Checkout = () => {
 
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

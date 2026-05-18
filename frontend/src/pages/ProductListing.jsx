@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "../App.css";
 import {
   fetchProducts,
@@ -8,9 +8,22 @@ import {
   updateCartItem,
   deleteCartItem,
   clearCart,
+  addToWishlist,
+  removeFromWishlist,
+  fetchWishlist,
 } from "../services/api";
 import { getCurrentUser } from "../utils/auth";
-import DevLoginButton from "../components/DevLoginButton";
+import {
+  getGuestCart,
+  addToGuestCart,
+  updateGuestCartItem,
+  removeFromGuestCart,
+  clearGuestCart,
+  toggleGuestWishlist,
+  getGuestWishlist,
+} from "../utils/guestCart";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { flavourMeta, hasFlavour, getProductSizeLabel } from "../utils/flavourData";
 
 const PRICE_RANGES = [
@@ -34,6 +47,7 @@ const ProductListing = () => {
   const [selectedFlavour, setSelectedFlavour]     = useState([]);
   const [selectedOccasion, setSelectedOccasion]   = useState([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState([]);
+  const [savedToWishlist, setSavedToWishlist] = useState(new Map());
 
   const navigate          = useNavigate();
   const [searchParams]    = useSearchParams();
@@ -45,19 +59,18 @@ const ProductListing = () => {
     if (cat) setSelectedCategories([cat]);
   }, [searchParams]);
 
-  async function loadProducts() {
-    try {
-      setLoadingProducts(true);
-      setProducts(await fetchProducts());
-    } catch {
-      setError("Failed to load products.");
-    } finally {
-      setLoadingProducts(false);
+  async function loadCart(productsOverride) {
+    if (!userId) {
+      const guestItems = getGuestCart();
+      const allProducts = productsOverride || products;
+      setCart(guestItems.map((gi) => {
+        const p = allProducts.find((p) => p.id === gi.product_id);
+        if (!p) return null;
+        return { cart_item_id: `guest-${p.id}`, product_id: p.id, name: p.name, price: p.price, image_url: p.image_url, quantity: gi.quantity, subtotal: p.price * gi.quantity };
+      }).filter(Boolean));
+      setLoadingCart(false);
+      return;
     }
-  }
-
-  async function loadCart() {
-    if (!userId) { setCart([]); setLoadingCart(false); return; }
     try {
       setLoadingCart(true);
       setCart(await fetchCart(userId));
@@ -68,7 +81,36 @@ const ProductListing = () => {
     }
   }
 
-  useEffect(() => { loadProducts(); loadCart(); }, []);
+  useEffect(() => {
+    async function init() {
+      try {
+        setLoadingProducts(true);
+        const prods = await fetchProducts();
+        setProducts(prods);
+        if (!userId) {
+          const guestWishlist = getGuestWishlist();
+          setSavedToWishlist(new Map(guestWishlist.map((id) => [id, `guest-${id}`])));
+          const guestItems = getGuestCart();
+          setCart(guestItems.map((gi) => {
+            const p = prods.find((p) => p.id === gi.product_id);
+            if (!p) return null;
+            return { cart_item_id: `guest-${p.id}`, product_id: p.id, name: p.name, price: p.price, image_url: p.image_url, quantity: gi.quantity, subtotal: p.price * gi.quantity };
+          }).filter(Boolean));
+          setLoadingCart(false);
+        } else {
+          fetchCart(userId).then(setCart).catch(() => {}).finally(() => setLoadingCart(false));
+          fetchWishlist(userId)
+            .then((data) => setSavedToWishlist(new Map(data.map((item) => [item.product_id, item.id]))))
+            .catch(() => {});
+        }
+      } catch {
+        setError("Failed to load products.");
+      } finally {
+        setLoadingProducts(false);
+      }
+    }
+    init();
+  }, [userId]);
 
   const categories = useMemo(() => {
     return [...new Set(products.map((p) => p.category))];
@@ -167,9 +209,39 @@ const ProductListing = () => {
   const totalItems = useMemo(() => cart.reduce((s, i) => s + i.quantity, 0), [cart]);
   const upsellProducts = products.filter((p) => !cart.some((c) => c.product_id === p.id));
 
+  async function handleToggleWishlist(productId) {
+    if (!userId) {
+      const added = toggleGuestWishlist(productId);
+      setSavedToWishlist((prev) => {
+        const m = new Map(prev);
+        if (added) m.set(productId, `guest-${productId}`);
+        else m.delete(productId);
+        return m;
+      });
+      return;
+    }
+    const wishlistItemId = savedToWishlist.get(productId);
+    try {
+      if (wishlistItemId) {
+        await removeFromWishlist(wishlistItemId);
+        setSavedToWishlist((prev) => { const m = new Map(prev); m.delete(productId); return m; });
+      } else {
+        const result = await addToWishlist(userId, productId);
+        setSavedToWishlist((prev) => new Map(prev).set(productId, result.id));
+      }
+    } catch {
+      setError("Failed to update wishlist.");
+    }
+  }
+
   async function handleAddToCart(productId) {
     setError("");
-    if (!userId) { setError("Please log in to add items to cart."); return; }
+    if (!userId) {
+      addToGuestCart(productId, 1);
+      await loadCart();
+      setIsCartOpen(true);
+      return;
+    }
     try {
       await addToCart(userId, productId, 1);
       await loadCart();
@@ -180,13 +252,21 @@ const ProductListing = () => {
   }
 
   async function handleIncrease(item) {
-    if (!userId) return;
+    if (!userId) {
+      updateGuestCartItem(item.product_id, item.quantity + 1);
+      await loadCart();
+      return;
+    }
     try { await updateCartItem(userId, item.cart_item_id, item.quantity + 1); await loadCart(); }
     catch { setError("Failed to update quantity."); }
   }
 
   async function handleDecrease(item) {
-    if (!userId) return;
+    if (!userId) {
+      updateGuestCartItem(item.product_id, item.quantity - 1);
+      await loadCart();
+      return;
+    }
     try {
       if (item.quantity <= 1) await deleteCartItem(userId, item.cart_item_id);
       else await updateCartItem(userId, item.cart_item_id, item.quantity - 1);
@@ -194,52 +274,29 @@ const ProductListing = () => {
     } catch { setError("Failed to update quantity."); }
   }
 
-  async function handleRemove(cartItemId) {
-    if (!userId) return;
+  async function handleRemove(cartItemId, productId) {
+    if (!userId) {
+      removeFromGuestCart(productId);
+      await loadCart();
+      return;
+    }
     try { await deleteCartItem(userId, cartItemId); await loadCart(); }
     catch { setError("Failed to remove item."); }
   }
 
   async function handleClearCart() {
-    if (!userId) return;
+    if (!userId) {
+      clearGuestCart();
+      setCart([]);
+      return;
+    }
     try { await clearCart(userId); await loadCart(); }
     catch { setError("Failed to clear cart."); }
   }
 
   return (
     <div className="alchemy-page">
-      <div className="top-bar">
-        Receive a personalized ice mold with orders over $150 at checkout.
-      </div>
-
-      <header className="site-header">
-        <Link to="/" className="brand listing-brand">
-          <span>LIQUID</span>
-          <span>ALCHEMY</span>
-        </Link>
-
-        <nav className="main-nav">
-          <Link to="/products?category=Cocktails" className="nav-link">Cocktails</Link>
-          <Link to="/products?category=Kits" className="nav-link">Kits</Link>
-          <Link to="/products?category=Glassware" className="nav-link">Glassware</Link>
-          <Link to="/products?category=Bar Tools" className="nav-link">Bar Tools</Link>
-          <Link to="/laboratory" className="nav-link">Laboratory</Link>
-        </nav>
-
-        <div className="header-actions">
-          <Link to="/wishlist" className="nav-link">Wishlist</Link>
-          {currentUser ? (
-            <Link to="/account" className="nav-link">{currentUser.username}</Link>
-          ) : (
-            <Link to="/login" className="nav-link">Login / Sign up</Link>
-          )}
-          <DevLoginButton />
-          <button className="cart-icon-button" onClick={() => setIsCartOpen(true)}>
-            <span className="cart-icon">👜</span>
-            <span className="cart-count">{totalItems}</span>
-          </button>
-        </div>
-      </header>
+      <Navbar cartCount={totalItems} onCartOpen={() => setIsCartOpen(true)} />
 
       <div className="listing-layout">
         {/* ── Filter Sidebar ── */}
@@ -448,12 +505,21 @@ const ProductListing = () => {
                           <p className="product-note">{meta.note}</p>
                         </>
                       )}
-                      <p className="product-price">${product.price.toFixed(2)}</p>
+                      <p className="product-price" style={{ marginTop: "auto" }}>${product.price.toFixed(2)}</p>
                       <button
                         className="ghost-button"
                         onClick={() => handleAddToCart(product.id)}
                       >
                         Add to cart
+                      </button>
+                      <button
+                        className="secondary-button"
+                        onClick={() => handleToggleWishlist(product.id)}
+                        style={savedToWishlist.has(product.id)
+                          ? { color: "#b07a47", borderColor: "transparent" }
+                          : {}}
+                      >
+                        {savedToWishlist.has(product.id) ? "♡ Saved to wishlist" : "♡ Save to wishlist"}
                       </button>
                     </div>
                   </article>
@@ -463,6 +529,8 @@ const ProductListing = () => {
           )}
         </section>
       </div>
+
+      <Footer />
 
       {/* ── Cart Drawer ── */}
       <div
@@ -499,7 +567,7 @@ const ProductListing = () => {
                         <span>{item.quantity}</span>
                         <button onClick={() => handleIncrease(item)}>+</button>
                       </div>
-                      <button className="text-button" onClick={() => handleRemove(item.cart_item_id)}>
+                      <button className="text-button" onClick={() => handleRemove(item.cart_item_id, item.product_id)}>
                         Remove
                       </button>
                     </div>

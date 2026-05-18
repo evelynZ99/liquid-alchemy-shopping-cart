@@ -1,102 +1,108 @@
-# 🍸 Liquid Alchemy — Cocktail E-commerce Platform
+# Liquid Alchemy — Cocktail E-commerce Platform
 
-A full-stack cocktail e-commerce platform built with React, FastAPI, and MySQL.  
-The project allows users to browse a curated cocktail collection, explore flavour profiles, manage a shopping cart, and complete a checkout flow.
+A full-stack cocktail e-commerce platform built with React, FastAPI, and MySQL. Users can browse a curated collection of cocktails, glassware, and bar kits, manage a shopping cart and wishlist, and complete a checkout flow. An admin panel provides full CRUD management over products, users, and orders.
 
 ---
 
-## Project Overview
+## Features
 
-This project reinterprets the classic shopping cart assignment as a cocktail-focused e-commerce platform.  
-Instead of a standard retail interface, it combines a minimalist industrial visual style with an experimental product storytelling approach.
+### Customer-facing
+- **Age Verification Gate** — enforced on first visit; state persisted in localStorage
+- **Home Page** — editorial hero section, cocktail collection grid, flavour profile scales, cart drawer
+- **Product Listing** — multi-filter sidebar (category, price, spirit, flavour, occasion, difficulty), search, wishlist toggle, cart drawer with upsell section
+- **Product Detail** — flavour matrix scales, attributes, quantity selector, add to cart, wishlist toggle
+- **Guest Cart & Wishlist** — unauthenticated users can add to cart and save to wishlist via localStorage; data is automatically merged into their account upon login
+- **Cart Page** — full cart management (quantity, remove, clear), order summary with tax estimate
+- **Checkout** — shipping address, shipping method selection, payment details with live card preview; requires login (redirects guests automatically)
+- **Payment Success** — order confirmation page
+- **User Account** — profile editing, password change, wishlist, cart, and order history in a tabbed sidebar layout
+- **Navbar** — cart count badge (guest + logged-in), wishlist icon, account icon, sign in / sign out
 
-The website includes:
-
-- Age verification gate
-- Hero section with branded editorial styling
-- Flavour matrix filter
-- Responsive product collection grid
-- Cart drawer with upsell recommendations
-- Wishlist management
-- User authentication
-- Checkout and payment flow
-- User account and order history
-- Dynamic CRUD operations connected to a MySQL database
+### Admin Panel (`/admin`)
+- **Dashboard** — summary cards for total users, products, orders, and cart activity
+- **Products** — create, edit, delete products; image upload from local file or URL; category/spirit/flavour/difficulty/occasion dropdowns populated from existing product data
+- **Users** — create users (21+ age validation), edit username and date of birth, reset password to DOB-based default (with optional email notification), delete user with cascade (cart, wishlist, orders)
+- **Orders** — view all orders, order detail modal with line items, images, and customer info
+- **Carts** — view active carts by user
 
 ---
 
 ## Tech Stack
 
-### Frontend
-- React
-- Vite
-- CSS
-
-### Backend
-- FastAPI
-- SQLModel
-- Uvicorn
-
-### Database
-- MySQL
-
-### Other Tools
-- Python virtual environment (`venv`)
-- MySQL Workbench
-- Git / GitHub
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, CSS |
+| Backend | FastAPI, SQLModel, Uvicorn |
+| Database | MySQL |
+| ORM | SQLAlchemy (via SQLModel) |
+| Auth | Custom (localStorage session, bcrypt hashing) |
+| Image Upload | python-multipart, FastAPI StaticFiles |
+| Email | smtplib (SMTP, optional) |
 
 ---
 
 ## Project Structure
 
-```text
-ecommerce-shopping-cart/
+```
+liquid-alchemy-shopping-cart/
 ├── backend/
 │   ├── routers/
-│   │   ├── __init__.py
 │   │   ├── products.py
 │   │   ├── cart.py
 │   │   ├── users.py
 │   │   ├── orders.py
-│   │   └── wishlist.py
+│   │   ├── wishlist.py
+│   │   └── admin.py
+│   ├── uploads/              ← uploaded product images (auto-created)
 │   ├── .venv/
-│   ├── .env              ← create this yourself (see below)
-│   ├── .env.example      ← reference for required variables
+│   ├── .env                  ← create this yourself (see below)
 │   ├── db.py
+│   ├── deps.py
 │   ├── main.py
 │   ├── models.py
+│   ├── security.py
 │   └── requirements.txt
 │
 ├── frontend/
-│   ├── public/
-│   │   └── images/
 │   └── src/
 │       ├── components/
+│       │   ├── admin/
+│       │   │   ├── AdminLayout.jsx
+│       │   │   └── admin.css
+│       │   ├── AgeVerificationModal.jsx
 │       │   ├── Navbar.jsx
 │       │   ├── Footer.jsx
-│       │   ├── ProductCard.jsx
-│       │   └── AgeVerificationModal.jsx
+│       │   └── ProductCard.jsx
 │       ├── pages/
+│       │   ├── admin/
+│       │   │   ├── AdminDashboard.jsx
+│       │   │   ├── AdminProducts.jsx
+│       │   │   ├── AdminUsers.jsx
+│       │   │   ├── AdminOrders.jsx
+│       │   │   └── AdminCarts.jsx
 │       │   ├── Home.jsx
 │       │   ├── ProductListing.jsx
 │       │   ├── ProductDetail.jsx
-│       │   ├── Login.jsx
-│       │   ├── Signup.jsx
 │       │   ├── Cart.jsx
 │       │   ├── Checkout.jsx
 │       │   ├── PaymentSuccess.jsx
-│       │   ├── Wishlist.jsx
 │       │   ├── Account.jsx
+│       │   ├── Wishlist.jsx
+│       │   ├── Login.jsx
+│       │   ├── Signup.jsx
+│       │   ├── Laboratory.jsx
 │       │   └── NotFound.jsx
 │       ├── services/
 │       │   └── api.js
+│       ├── utils/
+│       │   ├── auth.js
+│       │   ├── guestCart.js
+│       │   └── flavourData.js
 │       ├── App.jsx
 │       ├── App.css
-│       ├── index.css
 │       └── main.jsx
 │
 ├── database/
-│   ├── database_notes.md
 │   └── schema.sql
 │
 └── README.md
@@ -104,186 +110,172 @@ ecommerce-shopping-cart/
 
 ---
 
-## Page Ownership
-
-| Page | File | Owner |
-|------|------|-------|
-| Landing Page | pages/Home.jsx | Evelyn |
-| Product Listing | pages/ProductListing.jsx | Evelyn |
-| Login / Signup | pages/Login.jsx, pages/Signup.jsx | 成员 A |
-| Cart / Checkout / Payment | pages/Cart.jsx, pages/Checkout.jsx, pages/PaymentSuccess.jsx | 成员 B |
-| Wishlist / Account | pages/Wishlist.jsx, pages/Account.jsx | 成员 C |
-
----
-
 ## Getting Started
 
 ### Prerequisites
-- Node.js
-- Python 3.x
+- Node.js (v18+)
+- Python 3.10+
 - MySQL
 
----
-
 ### 1. Clone the Repository
-```text
+
+```bash
 git clone https://github.com/evelynZ99/liquid-alchemy-shopping-cart
-cd ecommerce-shopping-cart
+cd liquid-alchemy-shopping-cart
 ```
 
 ### 2. Database Setup
 
-Create the tables:
-```text
+Create the database and tables:
+
+```bash
 mysql -u root -p < database/schema.sql
 ```
 
-Import sample product data:
-```text
-mysql -u root -p ecommerce_cart_db < database/seed_data.sql
-```
-
 ### 3. Backend Setup
-```text
+
+```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create your `.env` file inside `backend/`:
-```text
+Create a `.env` file inside `backend/`:
+
+```env
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=ecommerce_cart_db
+ADMIN_KEY=your_secret_admin_key
+
+# Optional — for admin password reset emails
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
 ```
 
-Run the backend:
-```text
+Start the backend:
+
+```bash
 uvicorn main:app --reload
 ```
 
-Backend will run at: http://127.0.0.1:8000
+Backend runs at: `http://127.0.0.1:8000`  
+API docs available at: `http://127.0.0.1:8000/docs`
 
 ### 4. Frontend Setup
+
 Open a new terminal:
-```text
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend will run at: http://localhost:5173
+Frontend runs at: `http://localhost:5173`
 
-### 5. Seed Sample Products
+### 5. Seed Products
 
-After the backend is running, open:  
-http://127.0.0.1:8000/docs
+With the backend running, visit `http://127.0.0.1:8000/docs` and call:
 
-Then run:
-- POST /products/seed
+```
+POST /products/seed
+```
+
+### 6. Create an Admin Account
+
+Register at `/signup` and provide your `ADMIN_KEY` in the admin key field, or call `POST /users/register` directly with `is_admin: true` and the key.
 
 ---
 
 ## API Endpoints
 
 ### Products
-- `GET /products/` — Get all products
-- `GET /products/{id}` — Get product by ID
-- `POST /products/seed` — Seed sample products
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/products/` | List all products |
+| GET | `/products/{id}` | Get product by ID |
+| POST | `/products/` | Create product (admin) |
+| PUT | `/products/{id}` | Update product (admin) |
+| DELETE | `/products/{id}` | Delete product (admin) |
+| POST | `/products/seed` | Seed sample data |
+| POST | `/upload-image` | Upload product image (admin) |
 
 ### Cart
-- `GET /cart/` — Get cart items
-- `POST /cart/` — Add item to cart
-- `PUT /cart/{id}` — Update item quantity
-- `DELETE /cart/{id}` — Remove item
-- `DELETE /cart/` — Clear cart
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/cart/` | Get user's cart |
+| GET | `/cart/all` | Get all users' carts (admin) |
+| POST | `/cart/` | Add item to cart |
+| PUT | `/cart/{id}` | Update item quantity |
+| DELETE | `/cart/{id}` | Remove item |
+| DELETE | `/cart/` | Clear cart |
 
-### Users *(TODO — 成员 A)*
-- `POST /users/register`
-- `POST /users/login`
-- `GET /users/{id}`
+### Users
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/users/register` | Register new user |
+| POST | `/users/login` | Login |
+| GET | `/users/` | List all users (admin) |
+| GET | `/users/{id}` | Get user |
+| PATCH | `/users/{id}/profile` | Update username / date of birth |
+| PATCH | `/users/{id}/password` | Change password |
+| PATCH | `/users/{id}/role` | Update admin role (admin) |
+| POST | `/users/{id}/reset-password` | Reset to DOB-based password (admin) |
+| DELETE | `/users/{id}` | Delete user with cascade (admin) |
 
-### Wishlist *(TODO — 成员 C)*
-- `GET /wishlist/{user_id}`
-- `POST /wishlist/`
-- `DELETE /wishlist/{id}`
+### Orders
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/orders/` | Create order |
+| GET | `/orders/` | List all orders (admin) |
+| GET | `/orders/{id}` | Get order detail |
+| GET | `/orders/user/{id}` | Get user's order history |
 
-### Orders *(TODO — 成员 B)*
-- `POST /orders/`
-- `GET /orders/{id}`
-- `GET /orders/user/{user_id}`
+### Wishlist
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/wishlist/{user_id}` | Get user's wishlist |
+| POST | `/wishlist/` | Add item to wishlist |
+| DELETE | `/wishlist/{id}` | Remove item from wishlist |
 
 ---
 
-## Database Structure
+## Database Schema
 
 Database name: `ecommerce_cart_db`
 
 | Table | Description |
-|-------|-------------|
-| users | User accounts |
-| products | Cocktail and product data |
-| cart_items | Products added to cart |
-| wishlist_items | Products saved to wishlist |
-| orders | Order records |
-| order_items | Individual items within each order |
+|---|---|
+| `users` | User accounts (username, email, password hash, DOB, is_admin) |
+| `products` | Product catalogue (name, category, price, stock, image, attributes) |
+| `cart_items` | Active cart items per user |
+| `wishlist_items` | Saved wishlist items per user |
+| `orders` | Order records (user, total, status, timestamp) |
+| `order_items` | Line items within each order (product, quantity, price at purchase) |
 
 ---
 
-## Git Workflow
+## Guest Cart & Wishlist
 
-1. Never commit directly to `main`
-2. Always branch from `dev`
-```text
-git checkout dev
-git pull
-git checkout -b feature/your-feature-name
-```
-3. When done, push and open a Pull Request to `dev`
-```text
-git push origin feature/your-feature-name
-```
-4. Wait for code review before merging
+Unauthenticated users can freely browse, add products to cart, and save to wishlist. Data is stored in localStorage under the keys `liquidAlchemyGuestCart` and `liquidAlchemyGuestWishlist`.
+
+On login, guest cart and wishlist items are automatically merged into the user's server-side account and cleared from localStorage. Guests attempting to proceed to checkout are redirected to `/login`.
 
 ---
 
-## Main Features
+## Design
 
-- Age verification gate
-- Single-page application style interface
-- Responsive landing page layout
-- Flavour Matrix filter using sliders
-- Product collection grid with responsive layout
-- Add products to cart
-- Update cart item quantity
-- Remove individual cart item
-- Clear entire cart
-- Dynamic cart subtotal calculation
-- Upsell recommendation section inside cart drawer
-
----
-
-## Responsive Design
-
-- **Large screens:** 4 products per row
-- **Medium screens:** 3 products per row
-- **Mobile screens:** 2 products per row
-
----
-
-## Design Direction
-
-The interface was inspired by:
-- Premium minimalist product websites
-- Cocktail menu editorial layouts
-- Experimental visual storytelling
+The interface draws from premium minimalist product design and editorial cocktail aesthetics — dark backgrounds, serif typography (Newsreader), fine line details, and muted earth tones. Product storytelling is emphasised through flavour profile scales and curated attribute tags.
 
 ---
 
 ## Author
-- Name: Evelyn Zhou
-- Subject: Internet Programming
-- Assignment: Dynamic Web Interface to a Database System
+
+Evelyn Zhou — Internet Programming Assignment
