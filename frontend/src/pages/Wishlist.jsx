@@ -71,6 +71,7 @@ const Wishlist = () => {
 
   const totalPrice = useMemo(() => cart.reduce((s, i) => s + i.subtotal, 0), [cart])
   const totalItems = useMemo(() => cart.reduce((s, i) => s + i.quantity, 0), [cart])
+  const upsellProducts = useMemo(() => items.filter(item => !cart.some(c => c.product_id === item.product_id)), [items, cart])
 
   const handleRemoveFromWishlist = (item) => {
     if (!userId) {
@@ -154,10 +155,10 @@ const Wishlist = () => {
   )
 
   return (
-    <div className="alchemy-page" style={{ backgroundColor: '#f6f5f1', minHeight: '100vh' }}>
+    <div className="alchemy-page" style={{ backgroundColor: '#f6f5f1', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar onCartOpen={() => setIsCartOpen(true)} />
 
-      <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '56px' }}>
+      <main className="page-main" style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', flex: 1 }}>
 
         <header style={{ marginBottom: '40px' }}>
           <span style={{
@@ -167,7 +168,7 @@ const Wishlist = () => {
           }}>
             Curated Collection
           </span>
-          <h1 style={{
+          <h1 className="page-heading" style={{
             fontFamily: 'Newsreader, serif', fontSize: '60px',
             fontStyle: 'italic', fontWeight: 500, color: '#2f2c29', margin: '0 0 16px'
           }}>
@@ -208,13 +209,7 @@ const Wishlist = () => {
             </button>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '24px',
-            borderTop: '1px solid #d8d2c6',
-            paddingTop: '32px'
-          }}>
+          <div className="wishlist-grid">
             {items.map(item => (
               <div key={item.id}>
                 <div style={{ backgroundColor: '#efe8dc', padding: '16px', marginBottom: '16px' }}>
@@ -330,6 +325,24 @@ const Wishlist = () => {
                   </div>
                 ))}
               </div>
+
+              {upsellProducts.length > 0 && (
+                <div className="upsell-section">
+                  <h3>Others also considered</h3>
+                  <div className="upsell-grid">
+                    {upsellProducts.slice(0, 2).map((p) => (
+                      <div className="upsell-card" key={p.product_id}>
+                        <img src={p.image_url} alt={p.name} />
+                        <p>{p.name}</p>
+                        <span>${p.price?.toFixed(2)}</span>
+                        <button className="ghost-button small" onClick={() => handleAddToCart(p)}>
+                          Add to cart
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="cart-footer">
                 <div className="cart-summary-row">

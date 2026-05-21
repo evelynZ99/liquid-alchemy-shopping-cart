@@ -114,8 +114,8 @@ const AdminUsers = () => {
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
     if (today.getMonth() < dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) age--;
-    if (age < 21) {
-      setFormError("User must be 21 or older to register.");
+    if (age < 18) {
+      setFormError("User must be 18 or older to register.");
       return;
     }
 

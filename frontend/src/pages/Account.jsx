@@ -34,6 +34,7 @@ function StatusBadge({ status }) {
 const Account = () => {
   const navigate = useNavigate();
   const [activePanel, setActivePanel] = useState("profile");
+  const [isNavOpen, setIsNavOpen] = useState(false);
 
   const [userDetail, setUserDetail]       = useState(null);
   const [orders, setOrders]               = useState([]);
@@ -171,7 +172,7 @@ const Account = () => {
     }
   }
 
-  function handlePanelChange(id) { setActivePanel(id); setNotice(""); }
+  function handlePanelChange(id) { setActivePanel(id); setNotice(""); setIsNavOpen(false); }
 
   const menuItems = [
     { id: "profile",  label: "Profile",       description: "Personal details",      icon: "◎" },
@@ -194,7 +195,15 @@ const Account = () => {
               <span>User Profile</span>
             </div>
 
-            <div className="account-menu">
+            {/* Mobile collapsible toggle */}
+            <button className="account-nav-toggle" onClick={() => setIsNavOpen(prev => !prev)}>
+              <span>{menuItems.find(m => m.id === activePanel)?.label}</span>
+              <span className="material-symbols-outlined">
+                {isNavOpen ? "expand_less" : "expand_more"}
+              </span>
+            </button>
+
+            <div className={`account-menu${isNavOpen ? " nav-open" : ""}`}>
               {menuItems.map((item) => (
                 <button
                   key={item.id}
@@ -302,7 +311,7 @@ const Account = () => {
                       </span>
                     </div>
                   ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", borderTop: "1px solid #d8d2c6", paddingTop: "32px" }}>
+                    <div className="account-wishlist-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", borderTop: "1px solid #d8d2c6", paddingTop: "32px" }}>
                       {wishlist.map((item) => (
                         <div key={item.id}>
                           <div style={{ backgroundColor: "#efe8dc", padding: "12px", marginBottom: "12px" }}>
@@ -377,11 +386,11 @@ const Account = () => {
                   ) : (
                     <>
                       {cart.map((item) => (
-                        <div key={item.cart_item_id} style={{ display: "flex", gap: "24px", padding: "24px 0", borderTop: "1px solid #d8d2c6" }}>
-                          <div style={{ width: "120px", height: "160px", backgroundColor: "#efe8dc", flexShrink: 0 }}>
+                        <div key={item.cart_item_id} className="account-cart-item" style={{ display: "flex", gap: "24px", padding: "24px 0", borderTop: "1px solid #d8d2c6" }}>
+                          <div className="account-cart-item-image" style={{ width: "120px", height: "160px", backgroundColor: "#efe8dc", flexShrink: 0 }}>
                             {item.image_url && <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                           </div>
-                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1 }}>
+                          <div className="account-cart-item-info" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1 }}>
                             <div>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                                 <h3 style={{ fontFamily: "Newsreader, serif", fontSize: "20px", fontWeight: 500, color: "#2f2c29", margin: 0 }}>{item.name}</h3>
@@ -404,7 +413,7 @@ const Account = () => {
                           </div>
                         </div>
                       ))}
-                      <div style={{ borderTop: "1px solid #d8d2c6", paddingTop: "24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="account-cart-checkout-row" style={{ borderTop: "1px solid #d8d2c6", paddingTop: "24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <span style={{ fontFamily: "Inter", fontSize: "13px", color: "#6e6a63" }}>Subtotal ({cartCount} items)</span>
                           <p style={{ fontFamily: "Newsreader, serif", fontSize: "28px", fontStyle: "italic", color: "#2f2c29", margin: "4px 0 0" }}>

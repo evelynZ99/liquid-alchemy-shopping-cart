@@ -40,6 +40,7 @@ const ProductListing = () => {
   const [loadingCart, setLoadingCart]       = useState(true);
   const [error, setError]                   = useState("");
   const [isCartOpen, setIsCartOpen]         = useState(false);
+  const [isFilterOpen, setIsFilterOpen]     = useState(false);
   const [search, setSearch]                 = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedPrice, setSelectedPrice]   = useState("all");
@@ -300,15 +301,12 @@ const ProductListing = () => {
 
       <div className="listing-layout">
         {/* ── Filter Sidebar ── */}
-        <aside className="filter-sidebar">
-          <div className="filter-group">
-            <input
-              className="search-input"
-              type="text"
-              placeholder="Search products…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <aside className={`filter-sidebar${isFilterOpen ? " filter-sidebar-open" : ""}`}>
+          <div className="filter-drawer-header">
+            <span className="filter-drawer-title">Filter by</span>
+            <button className="filter-drawer-close" onClick={() => setIsFilterOpen(false)}>
+              <span className="material-symbols-outlined">close</span>
+            </button>
           </div>
 
           <div className="filter-group">
@@ -451,8 +449,28 @@ const ProductListing = () => {
           )}
         </aside>
 
+        {isFilterOpen && (
+          <div className="filter-overlay" onClick={() => setIsFilterOpen(false)} />
+        )}
+
         {/* ── Product Grid ── */}
         <section className="listing-content">
+          <input
+            className="search-input search-input-mobile"
+            type="text"
+            placeholder="Search products…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <div className="filter-mobile-bar">
+            <button className="filter-mobile-btn" onClick={() => setIsFilterOpen(true)}>
+              <span className="material-symbols-outlined">tune</span>
+              Filter
+            </button>
+            <span className="listing-count mobile-count">{filteredProducts.length} products</span>
+          </div>
+
           <div className="listing-head">
             <div>
               <h2 className="listing-title">Collection</h2>

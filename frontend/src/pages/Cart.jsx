@@ -82,9 +82,9 @@ const Cart = () => {
 
   // 空购物车
   if (cartItems.length === 0) return (
-    <div className="alchemy-page" style={{ backgroundColor: '#f6f5f1', minHeight: '100vh' }}>
+    <div className="alchemy-page" style={{ backgroundColor: '#f6f5f1', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
-      <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '56px' }}>
+      <main className="page-main" style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', flex: 1 }}>
         <header style={{ marginBottom: '40px' }}>
           <span style={{
             fontFamily: 'Inter', fontSize: '12px', letterSpacing: '2px',
@@ -93,7 +93,7 @@ const Cart = () => {
           }}>
             Review Your Order
           </span>
-          <h1 style={{
+          <h1 className="page-heading" style={{
             fontFamily: 'Newsreader, serif', fontSize: '60px',
             fontStyle: 'italic', fontWeight: 500, color: '#2f2c29', margin: 0
           }}>
@@ -125,11 +125,11 @@ const Cart = () => {
 
   // 有商品的购物车
   return (
-    <div className="alchemy-page" style={{ backgroundColor: '#f6f5f1', minHeight: '100vh' }}>
+    <div className="alchemy-page" style={{ backgroundColor: '#f6f5f1', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
-      <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '56px' }}>
+      <main className="page-main" style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', flex: 1 }}>
 
-        <div style={{ display: 'flex', gap: '48px', alignItems: 'flex-start' }}>
+        <div className="cart-layout" style={{ alignItems: 'flex-start' }}>
 
           {/* 左边：商品列表 */}
           <div style={{ flex: 1 }}>
@@ -141,7 +141,7 @@ const Cart = () => {
               }}>
                 Review Your Order
               </span>
-              <h1 style={{
+              <h1 className="page-heading" style={{
                 fontFamily: 'Newsreader, serif', fontSize: '60px',
                 fontStyle: 'italic', fontWeight: 500, color: '#2f2c29', margin: '0 0 16px'
               }}>
@@ -160,111 +160,70 @@ const Cart = () => {
               </button>
             </header>
 
-            {cartItems.map(item => (
-              <div key={item.cart_item_id} style={{
-                display: 'flex', gap: '32px',
-                padding: '32px 0', borderTop: '1px solid #d8d2c6'
-              }}>
-
-                {/* 商品图片 */}
-                <div style={{
-                  width: '192px', height: '256px',
-                  backgroundColor: '#efe8dc', flexShrink: 0
+            <div className="cart-items-list">
+              {cartItems.map(item => (
+                <div key={item.cart_item_id} className="cart-item-row" style={{
+                  display: 'flex', gap: '32px',
+                  padding: '32px 0', borderTop: '1px solid #d8d2c6'
                 }}>
-                  {item.image_url && (
-                    <img
-                      src={item.image_url} alt={item.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  )}
-                </div>
-
-                {/* 商品信息 */}
-                <div style={{
-                  display: 'flex', flexDirection: 'column',
-                  justifyContent: 'space-between', flex: 1
-                }}>
-                  <div>
-                    {/* 名字和价格 */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <h3 style={{
-                        fontFamily: 'Newsreader, serif', fontSize: '24px',
-                        fontWeight: 500, color: '#2f2c29', margin: 0
-                      }}>
-                        {item.name}
-                      </h3>
-                      <span style={{ fontFamily: 'Inter', fontSize: '18px', color: '#2f2c29' }}>
-                        ${item.price.toFixed(2)}
-                      </span>
-                    </div>
-
-                    {/* 描述 */}
-                    {item.description && (
-                      <p style={{
-                        fontFamily: 'Inter', fontSize: '15px',
-                        fontStyle: 'italic', color: '#6e6a63', margin: 0
-                      }}>
-                        {item.description}
-                      </p>
+                  <div className="cart-item-image" style={{ backgroundColor: '#efe8dc', flexShrink: 0 }}>
+                    {item.image_url && (
+                      <img src={item.image_url} alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     )}
                   </div>
 
-                  {/* 数量控制 + 删除 */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center',
-                      border: '1px solid #d8d2c6', height: '40px'
-                    }}>
-                      <button
-                        onClick={() => handleQuantityChange(item.cart_item_id, item.product_id, item.quantity - 1)}
-                        style={{
-                          width: '40px', height: '100%', background: 'none',
-                          border: 'none', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>remove</span>
-                      </button>
-                      <span style={{
-                        width: '48px', textAlign: 'center',
-                        fontFamily: 'Inter', fontSize: '15px'
-                      }}>
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => handleQuantityChange(item.cart_item_id, item.product_id, item.quantity + 1)}
-                        style={{
-                          width: '40px', height: '100%', background: 'none',
-                          border: 'none', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-                      </button>
+                  <div className="cart-item-info" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <h3 style={{ fontFamily: 'Newsreader, serif', fontSize: '24px', fontWeight: 500, color: '#2f2c29', margin: 0 }}>
+                          {item.name}
+                        </h3>
+                        <span style={{ fontFamily: 'Inter', fontSize: '18px', color: '#2f2c29' }}>
+                          ${item.price.toFixed(2)}
+                        </span>
+                      </div>
+                      {item.description && (
+                        <p style={{ fontFamily: 'Inter', fontSize: '15px', fontStyle: 'italic', color: '#6e6a63', margin: 0 }}>
+                          {item.description}
+                        </p>
+                      )}
                     </div>
 
-                    <button
-                      onClick={() => handleRemove(item.cart_item_id, item.product_id)}
-                      style={{
-                        background: 'none', border: 'none',
-                        color: '#9c3d2b', cursor: 'pointer',
-                        fontFamily: 'Inter', fontSize: '11px',
-                        textTransform: 'uppercase', letterSpacing: '2px',
-                        borderBottom: '1px solid #9c3d2b', paddingBottom: '2px'
-                      }}
-                    >
-                      Remove Item
-                    </button>
+                    <div className="cart-item-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="cart-item-stepper" style={{ display: 'flex', alignItems: 'center', border: '1px solid #d8d2c6', height: '40px' }}>
+                        <button
+                          onClick={() => handleQuantityChange(item.cart_item_id, item.product_id, item.quantity - 1)}
+                          style={{ width: '40px', height: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>remove</span>
+                        </button>
+                        <span style={{ width: '48px', textAlign: 'center', fontFamily: 'Inter', fontSize: '15px' }}>
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => handleQuantityChange(item.cart_item_id, item.product_id, item.quantity + 1)}
+                          style={{ width: '40px', height: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => handleRemove(item.cart_item_id, item.product_id)}
+                        style={{ background: 'none', border: 'none', color: '#9c3d2b', cursor: 'pointer', fontFamily: 'Inter', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '2px', borderBottom: '1px solid #9c3d2b', paddingBottom: '2px' }}
+                      >
+                        Remove Item
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-
-            <div style={{ borderTop: '1px solid #d8d2c6', paddingTop: '32px' }} />
+              ))}
+              <div style={{ borderTop: '1px solid #d8d2c6', paddingTop: '32px' }} />
+            </div>
           </div>
 
           {/* 右边：订单摘要 */}
-          <aside style={{ width: '384px', flexShrink: 0 }}>
+          <aside className="cart-summary-aside" style={{ flexShrink: 0 }}>
             <div style={{
               backgroundColor: '#f1eee6', border: '1px solid #d8d2c6',
               padding: '32px', position: 'sticky', top: '32px'

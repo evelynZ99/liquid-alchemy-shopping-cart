@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { register as registerUser } from "../services/api";
+import { register as registerUser, addToCart, addToWishlist } from "../services/api";
+import { getGuestCart, clearGuestCart, getGuestWishlist, clearGuestWishlist } from "../utils/guestCart";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -73,6 +74,14 @@ const Signup = () => {
         role: user.is_admin ? "admin" : "customer",
         loginMethod: "database-customer",
       }));
+      const guestCart = getGuestCart();
+      const guestWishlist = getGuestWishlist();
+      await Promise.allSettled([
+        ...guestCart.map(item => addToCart(user.id, item.product_id, item.quantity)),
+        ...guestWishlist.map(pid => addToWishlist(user.id, pid)),
+      ]);
+      clearGuestCart();
+      clearGuestWishlist();
       navigate("/");
     } catch {
       setIsSubmitting(false);

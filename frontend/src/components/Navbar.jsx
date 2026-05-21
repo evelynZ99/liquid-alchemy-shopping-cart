@@ -1,13 +1,20 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCurrentUser, clearCurrentUser } from "../utils/auth";
 import { getGuestCartCount } from "../utils/guestCart";
 
-const Navbar = ({ onCartOpen, cartCount }) => {
+const Navbar = ({ cartCount }) => {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const currentUser = getCurrentUser();
   const displayCartCount = cartCount ?? (!currentUser ? getGuestCartCount() : 0);
 
+  function closeMenu() {
+    setIsMenuOpen(false);
+  }
+
   function handleAccountEntry() {
+    closeMenu();
     if (!currentUser) {
       navigate("/login");
       return;
@@ -31,18 +38,18 @@ const Navbar = ({ onCartOpen, cartCount }) => {
       </div>
 
       <header className="site-header">
-        <Link to="/" className="brand listing-brand">
+        <Link to="/" className="brand listing-brand" onClick={closeMenu}>
           <span>LIQUID</span>
           <span>ALCHEMY</span>
         </Link>
 
-        <nav className="main-nav">
-          <Link to="/" className="nav-link">Home</Link>
-          <Link to="/products?category=Cocktails" className="nav-link">Cocktails</Link>
-          <Link to="/products?category=Kits" className="nav-link">Kits</Link>
-          <Link to="/products?category=Glassware" className="nav-link">Glassware</Link>
-          <Link to="/products?category=Bar Tools" className="nav-link">Bar Tools</Link>
-          <Link to="/laboratory" className="nav-link">Laboratory</Link>
+        <nav className={`main-nav${isMenuOpen ? " nav-open" : ""}`}>
+          <Link to="/" className="nav-link" onClick={closeMenu}>Home</Link>
+          <Link to="/products?category=Cocktails" className="nav-link" onClick={closeMenu}>Cocktails</Link>
+          <Link to="/products?category=Kits" className="nav-link" onClick={closeMenu}>Kits</Link>
+          <Link to="/products?category=Glassware" className="nav-link" onClick={closeMenu}>Glassware</Link>
+          <Link to="/products?category=Bar Tools" className="nav-link" onClick={closeMenu}>Bar Tools</Link>
+          <Link to="/laboratory" className="nav-link" onClick={closeMenu}>Laboratory</Link>
         </nav>
 
         <div className="header-actions">
@@ -87,7 +94,7 @@ const Navbar = ({ onCartOpen, cartCount }) => {
           <button
             className="cart-icon-button"
             aria-label="Open wishlist"
-            onClick={() => navigate("/wishlist")}
+            onClick={() => { closeMenu(); navigate("/wishlist"); }}
           >
             <span className="cart-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
@@ -106,7 +113,7 @@ const Navbar = ({ onCartOpen, cartCount }) => {
           <button
             className="cart-icon-button"
             aria-label="Open cart"
-            onClick={onCartOpen || (() => navigate("/cart"))}
+            onClick={() => { closeMenu(); navigate("/cart"); }}
             style={{ position: "relative" }}
           >
             <span className="cart-icon">
@@ -147,8 +154,23 @@ const Navbar = ({ onCartOpen, cartCount }) => {
               </span>
             )}
           </button>
+
+          <button
+            type="button"
+            className="hamburger-button"
+            aria-label="Toggle navigation"
+            onClick={() => setIsMenuOpen(prev => !prev)}
+          >
+            <span className="material-symbols-outlined">
+              {isMenuOpen ? "close" : "menu"}
+            </span>
+          </button>
         </div>
       </header>
+
+      {isMenuOpen && (
+        <div className="nav-overlay" onClick={closeMenu} />
+      )}
     </>
   );
 };
