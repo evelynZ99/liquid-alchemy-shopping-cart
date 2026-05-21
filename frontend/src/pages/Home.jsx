@@ -9,9 +9,20 @@ import {
   updateCartItem,
   deleteCartItem,
   clearCart,
+  addToWishlist,
+  removeFromWishlist,
+  fetchWishlist,
 } from "../services/api";
 
 import { getCurrentUser } from "../utils/auth";
+import {
+  getGuestCart, addToGuestCart, updateGuestCartItem,
+  removeFromGuestCart, clearGuestCart, getGuestCartCount,
+  getGuestWishlist, toggleGuestWishlist,
+} from "../utils/guestCart";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import AgeVerificationModal from "../components/AgeVerificationModal";
 import {
   flavourMeta,
   hasFlavour,
@@ -21,6 +32,10 @@ import {
 const Home = () => {
   const navigate = useNavigate();
 
+  const [ageStatus, setAgeStatus] = useState(() =>
+    localStorage.getItem("liquidAlchemyAgeVerified") === "true" ? "verified" : "pending"
+  );
+
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -28,27 +43,20 @@ const Home = () => {
   const [error, setError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  function handleApproveAge() {
+    localStorage.setItem("liquidAlchemyAgeVerified", "true");
+    setAgeStatus("verified");
+  }
+
+  function handleRejectAge() {
+    localStorage.removeItem("liquidAlchemyAgeVerified");
+    setAgeStatus("rejected");
+  }
+
   const currentUser = getCurrentUser();
   const userId = currentUser?.id;
 
-  function handleAccountEntry() {
-    if (!currentUser) {
-      navigate("/login");
-      return;
-    }
-
-    if (currentUser.is_admin || currentUser.role === "admin") {
-      navigate("/admin");
-      return;
-    }
-
-    navigate("/account");
-  }
-  
-  function handleHomeSignOut() {
-  localStorage.removeItem("liquidAlchemyCurrentUser");
-  navigate("/login", { replace: true });
-}
+  const [savedToWishlist, setSavedToWishlist] = useState(new Map());
 
   const [filters, setFilters] = useState({
     sour: 50,
@@ -70,11 +78,16 @@ const Home = () => {
 
   async function loadCart() {
     if (!userId) {
-      setCart([]);
+      // resolve guest cart against loaded products
+      const guestItems = getGuestCart();
+      setCart(guestItems.map((gi) => {
+        const p = products.find((p) => p.id === gi.product_id);
+        if (!p) return null;
+        return { cart_item_id: `guest-${p.id}`, product_id: p.id, name: p.name, price: p.price, image_url: p.image_url, quantity: gi.quantity, subtotal: p.price * gi.quantity };
+      }).filter(Boolean));
       setLoadingCart(false);
       return;
     }
-
     try {
       setLoadingCart(true);
       const data = await fetchCart(userId);
@@ -88,18 +101,54 @@ const Home = () => {
 
   useEffect(() => {
     loadProducts();
-    loadCart();
+    if (userId) {
+      fetchWishlist(userId)
+        .then((data) => setSavedToWishlist(new Map(data.map((item) => [item.product_id, item.id]))))
+        .catch(() => {});
+    } else {
+      const guestList = getGuestWishlist();
+      setSavedToWishlist(new Map(guestList.map((id) => [id, `guest-${id}`])));
+    }
   }, [userId]);
 
-  async function handleAddToCart(productId) {
+  useEffect(() => {
+    if (products.length > 0) loadCart();
+  }, [products, userId]);
+
+  async function handleToggleWishlist(productId) {
+    if (!userId) {
+      const added = toggleGuestWishlist(productId);
+      setSavedToWishlist((prev) => {
+        const m = new Map(prev);
+        if (added) m.set(productId, `guest-${productId}`);
+        else m.delete(productId);
+        return m;
+      });
+      return;
+    }
+    const wishlistItemId = savedToWishlist.get(productId);
     try {
-      setError("");
-
-      if (!userId) {
-        setError("Please sign in to add items to your cart.");
-        return;
+      if (wishlistItemId) {
+        await removeFromWishlist(wishlistItemId);
+        setSavedToWishlist((prev) => { const m = new Map(prev); m.delete(productId); return m; });
+      } else {
+        const result = await addToWishlist(userId, productId);
+        setSavedToWishlist((prev) => new Map(prev).set(productId, result.id));
       }
+    } catch {
+      setError("Failed to update wishlist.");
+    }
+  }
 
+  async function handleAddToCart(productId) {
+    setError("");
+    if (!userId) {
+      addToGuestCart(productId, 1);
+      await loadCart();
+      setIsCartOpen(true);
+      return;
+    }
+    try {
       await addToCart(userId, productId, 1);
       await loadCart();
       setIsCartOpen(true);
@@ -109,14 +158,13 @@ const Home = () => {
   }
 
   async function handleIncrease(item) {
+    setError("");
+    if (!userId) {
+      updateGuestCartItem(item.product_id, item.quantity + 1);
+      await loadCart();
+      return;
+    }
     try {
-      setError("");
-
-      if (!userId) {
-        setError("Please sign in to update your cart.");
-        return;
-      }
-
       await updateCartItem(userId, item.cart_item_id, item.quantity + 1);
       await loadCart();
     } catch (err) {
@@ -125,35 +173,29 @@ const Home = () => {
   }
 
   async function handleDecrease(item) {
+    setError("");
+    if (!userId) {
+      updateGuestCartItem(item.product_id, item.quantity - 1);
+      await loadCart();
+      return;
+    }
     try {
-      setError("");
-
-      if (!userId) {
-        setError("Please sign in to update your cart.");
-        return;
-      }
-
-      if (item.quantity <= 1) {
-        await deleteCartItem(userId, item.cart_item_id);
-      } else {
-        await updateCartItem(userId, item.cart_item_id, item.quantity - 1);
-      }
-
+      if (item.quantity <= 1) await deleteCartItem(userId, item.cart_item_id);
+      else await updateCartItem(userId, item.cart_item_id, item.quantity - 1);
       await loadCart();
     } catch (err) {
       setError("Failed to update item quantity.");
     }
   }
 
-  async function handleRemove(cartItemId) {
+  async function handleRemove(cartItemId, productId) {
+    setError("");
+    if (!userId) {
+      removeFromGuestCart(productId);
+      await loadCart();
+      return;
+    }
     try {
-      setError("");
-
-      if (!userId) {
-        setError("Please sign in to update your cart.");
-        return;
-      }
-
       await deleteCartItem(userId, cartItemId);
       await loadCart();
     } catch (err) {
@@ -162,14 +204,13 @@ const Home = () => {
   }
 
   async function handleClearCart() {
+    setError("");
+    if (!userId) {
+      clearGuestCart();
+      await loadCart();
+      return;
+    }
     try {
-      setError("");
-
-      if (!userId) {
-        setError("Please sign in to update your cart.");
-        return;
-      }
-
       await clearCart(userId);
       await loadCart();
     } catch (err) {
@@ -186,6 +227,7 @@ const Home = () => {
   }, [cart]);
 
   const filteredProducts = products.filter((product) => {
+    if (product.category !== "Cocktails") return false;
     if (!hasFlavour(product.category)) return true;
 
     const meta = flavourMeta[product.name] || {
@@ -207,99 +249,7 @@ const Home = () => {
 
   return (
     <div className="alchemy-page">
-      <div className="top-bar">
-        Receive a personalized ice mold with orders over $150 at checkout.
-      </div>
-
-      <header className="site-header">
-        <Link to="/" className="brand listing-brand">
-          <span>LIQUID</span>
-          <span>ALCHEMY</span>
-        </Link>
-
-        <nav className="main-nav">
-          <Link to="/products?category=Cocktails" className="nav-link">
-            Cocktails
-          </Link>
-          <Link to="/products?category=Kits" className="nav-link">
-            Kits
-          </Link>
-          <Link to="/products?category=Glassware" className="nav-link">
-            Glassware
-          </Link>
-          <Link to="/products?category=Bar Tools" className="nav-link">
-            Bar Tools
-          </Link>
-          <Link to="/laboratory" className="nav-link">
-            Laboratory
-          </Link>
-          <Link to="/wishlist" className="nav-link">
-            Wishlist
-          </Link>
-        </nav>
-
-        <div className="header-actions">
-          <button
-            type="button"
-            className="account-icon-link"
-            aria-label="Open account page"
-            onClick={handleAccountEntry}
-          >
-            <span className="account-icon">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                aria-hidden="true"
-              >
-                <path
-                  d="M12 12c2.35 0 4.25-1.9 4.25-4.25S14.35 3.5 12 3.5 7.75 5.4 7.75 7.75 9.65 12 12 12Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M4.75 20.25c.65-3.45 3.52-5.75 7.25-5.75s6.6 2.3 7.25 5.75"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-          </button>
-
-          {currentUser ? (
-  <div className="home-user-area">
-    <span className="home-user-label">
-      User: {currentUser.username || currentUser.email}
-    </span>
-
-    <button
-      type="button"
-      className="home-logout-button"
-      onClick={handleHomeSignOut}
-    >
-      Log out
-    </button>
-  </div>
-) : (
-  <button
-    type="button"
-    className="home-logout-button"
-    onClick={() => navigate("/login")}
-  >
-    Sign in
-  </button>
-)}
-
-          <button
-            className="cart-icon-button"
-            onClick={() => setIsCartOpen(true)}
-          >
-            <span className="cart-icon">👜</span>
-            <span className="cart-count">{totalItems}</span>
-          </button>
-        </div>
-      </header>
+      <Navbar cartCount={totalItems} onCartOpen={() => setIsCartOpen(true)} />
 
       <main className="main-content">
         <section className="hero-section">
@@ -472,7 +422,7 @@ const Home = () => {
                         </>
                       )}
 
-                      <p className="product-price">
+                      <p className="product-price" style={{ marginTop: "auto" }}>
                         ${product.price.toFixed(2)}
                       </p>
 
@@ -481,6 +431,15 @@ const Home = () => {
                         onClick={() => handleAddToCart(product.id)}
                       >
                         Add to cart
+                      </button>
+                      <button
+                        className="secondary-button"
+                        onClick={() => handleToggleWishlist(product.id)}
+                        style={savedToWishlist.has(product.id)
+                          ? { color: "#b07a47", borderColor: "transparent" }
+                          : {}}
+                      >
+                        {savedToWishlist.has(product.id) ? "♡ Saved to wishlist" : "♡ Save to wishlist"}
                       </button>
                     </div>
                   </article>
@@ -508,6 +467,8 @@ const Home = () => {
           </div>
         </section>
       </main>
+
+      <Footer />
 
       <div
         className={`drawer-overlay ${isCartOpen ? "show" : ""}`}
@@ -631,6 +592,14 @@ const Home = () => {
           )}
         </div>
       </aside>
+
+      {ageStatus !== "verified" && (
+        <AgeVerificationModal
+          onApprove={handleApproveAge}
+          onReject={handleRejectAge}
+          rejected={ageStatus === "rejected"}
+        />
+      )}
     </div>
   );
 };

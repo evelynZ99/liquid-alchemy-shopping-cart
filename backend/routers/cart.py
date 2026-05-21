@@ -43,7 +43,7 @@ def get_all_carts(admin_user: User = Depends(require_admin)):
         for item in cart_items:
             user = user_map.get(item.user_id)
             product = product_map.get(item.product_id)
-            if not user or not product:
+            if not user or not product or user.is_admin:
                 continue
             entry = grouped.setdefault(
                 user.id,
@@ -78,6 +78,8 @@ def add_to_cart(user_id: int, product_id: int, quantity: int = 1):
         user = session.get(User, user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        if user.is_admin:
+            raise HTTPException(status_code=403, detail="Admin accounts cannot use the cart")
         product = session.get(Product, product_id)
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")

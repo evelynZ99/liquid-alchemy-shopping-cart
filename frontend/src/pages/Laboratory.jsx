@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import "../App.css";
-import { getCurrentUser } from "../utils/auth";
-import DevLoginButton from "../components/DevLoginButton";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const SPIRITS = [
   {
@@ -84,38 +84,9 @@ const FLAVOUR_PAIRS = [
 ];
 
 const Laboratory = () => {
-  const currentUser = getCurrentUser();
-
   return (
     <div className="alchemy-page">
-      <div className="top-bar">
-        Receive a personalized ice mold with orders over $150 at checkout.
-      </div>
-
-      <header className="site-header">
-        <Link to="/" className="brand listing-brand">
-          <span>LIQUID</span>
-          <span>ALCHEMY</span>
-        </Link>
-
-        <nav className="main-nav">
-          <Link to="/products?category=Cocktails" className="nav-link">Cocktails</Link>
-          <Link to="/products?category=Kits" className="nav-link">Kits</Link>
-          <Link to="/products?category=Glassware" className="nav-link">Glassware</Link>
-          <Link to="/products?category=Bar Tools" className="nav-link">Bar Tools</Link>
-          <Link to="/laboratory" className="nav-link nav-link--active">Laboratory</Link>
-        </nav>
-
-        <div className="header-actions">
-          <Link to="/wishlist" className="nav-link">Wishlist</Link>
-          {currentUser ? (
-            <Link to="/account" className="nav-link">{currentUser.username}</Link>
-          ) : (
-            <Link to="/login" className="nav-link">Login / Sign up</Link>
-          )}
-          <DevLoginButton />
-        </div>
-      </header>
+      <Navbar />
 
       {/* ── Hero ── */}
       <div className="lab-hero">
@@ -220,6 +191,8 @@ const Laboratory = () => {
           Shop the collection
         </Link>
       </section>
+
+      <Footer />
     </div>
   );
 };

@@ -112,6 +112,7 @@ export async function register(username, email, password, options = {}) {
     username,
     email,
     password,
+    date_of_birth: options.dateOfBirth,
     is_admin: Boolean(options.isAdmin),
     admin_key: options.adminKey || null,
   };
@@ -120,7 +121,10 @@ export async function register(username, email, password, options = {}) {
     headers: JSON_HEADERS,
     body: JSON.stringify(payload),
   });
-  if (!response.ok) throw new Error("Failed to register");
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to register");
+  }
   return response.json();
 }
 
@@ -151,6 +155,53 @@ export async function updatePassword(userId, currentPassword, newPassword) {
   });
 
   if (!response.ok) throw new Error("Failed to update password");
+  return response.json();
+}
+
+export async function updateUsername(userId, username) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`, {
+    method: "PATCH",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ username }),
+  });
+  if (!response.ok) throw new Error("Failed to update username");
+  return response.json();
+}
+
+export async function uploadProductImage(adminUserId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch(`${API_BASE_URL}/upload-image`, {
+    method: "POST",
+    headers: adminHeaders(adminUserId),
+    body: formData,
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to upload image");
+  }
+  return response.json();
+}
+
+export async function adminUpdateUserProfile(adminUserId, userId, { username, dateOfBirth }) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`, {
+    method: "PATCH",
+    headers: { ...JSON_HEADERS, ...adminHeaders(adminUserId) },
+    body: JSON.stringify({ username, date_of_birth: dateOfBirth || null }),
+  });
+  if (!response.ok) throw new Error("Failed to update user profile");
+  return response.json();
+}
+
+export async function adminResetUserPassword(adminUserId, userId) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/reset-password`, {
+    method: "POST",
+    headers: adminHeaders(adminUserId),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to reset password");
+  }
   return response.json();
 }
 

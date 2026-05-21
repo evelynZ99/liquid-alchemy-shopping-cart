@@ -46,21 +46,17 @@ function isAdminUser(user) {
 
 // 只需要年龄验证的页面
 const AgeVerifiedRoute = ({ children }) => {
-  const location = useLocation();
-
   if (!isAgeVerified()) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/" replace />;
   }
-
   return children;
 };
 
-// 需要登录的页面，例如 Account
 const AccountRoute = ({ children }) => {
   const location = useLocation();
 
   if (!isAgeVerified()) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/" replace />;
   }
 
   if (!isLoggedIn()) {
@@ -70,13 +66,11 @@ const AccountRoute = ({ children }) => {
   return children;
 };
 
-// 管理员页面
 const AdminRoute = ({ children }) => {
-  const location = useLocation();
   const user = getCurrentUser();
 
   if (!isAgeVerified()) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/" replace />;
   }
 
   if (!user || !isAdminUser(user)) {
@@ -95,14 +89,7 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
 
         {/* 普通浏览页面：只需要年龄验证，不强制登录 */}
-        <Route
-          path="/"
-          element={
-            <AgeVerifiedRoute>
-              <Home />
-            </AgeVerifiedRoute>
-          }
-        />
+        <Route path="/" element={<Home />} />
 
         <Route
           path="/products"
