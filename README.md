@@ -21,7 +21,7 @@ A full-stack cocktail e-commerce platform built with React, FastAPI, and MySQL. 
 ### Admin Panel (`/admin`)
 - **Dashboard** — summary cards for total users, products, orders, and cart activity
 - **Products** — create, edit, delete products; image upload from local file or URL; category/spirit/flavour/difficulty/occasion dropdowns populated from existing product data
-- **Users** — create users (21+ age validation), edit username and date of birth, reset password to DOB-based default (with optional email notification), delete user with cascade (cart, wishlist, orders)
+- **Users** — create users (18+ age validation), edit username and date of birth, reset password to DOB-based default (with optional email notification), delete user with cascade (cart, wishlist, orders)
 - **Orders** — view all orders, order detail modal with line items, images, and customer info
 - **Carts** — view active carts by user
 
@@ -188,9 +188,18 @@ With the backend running, visit `http://127.0.0.1:8000/docs` and call:
 POST /products/seed
 ```
 
-### 6. Create an Admin Account
+### 6. Admin Access
 
-Register at `/signup` and provide your `ADMIN_KEY` in the admin key field, or call `POST /users/register` directly with `is_admin: true` and the key.
+No account creation needed. Use the provided admin credentials below to log in directly at `/login`.
+
+### Demo Credentials
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `dev-admin@liquidalchemy.test` | `devpass123` |
+| Customer | `demouser@test.com` | `123456` |
+
+> The admin account gives access to `/admin` (product, user, and order management). The customer account is a regular user for testing checkout and account features.
 
 ---
 
