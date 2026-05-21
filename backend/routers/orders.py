@@ -34,6 +34,8 @@ def create_order(data: OrderCreate):
         user = session.get(User, data.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        if user.is_admin:
+            raise HTTPException(status_code=403, detail="Admin accounts cannot place orders")
 
         for item in data.items:
             product = session.get(Product, item.product_id)
@@ -87,6 +89,7 @@ def get_order(order_id: int):
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
 
+        user = session.get(User, order.user_id)
         items = session.exec(
             select(OrderItem).where(OrderItem.order_id == order.id)
         ).all()
@@ -97,12 +100,15 @@ def get_order(order_id: int):
                 "product_id": item.product_id,
                 "quantity": item.quantity,
                 "price_at_purchase": item.price_at_purchase,
-                "name": product.name if product else "",
+                "name": product.name if product else "—",
+                "image_url": product.image_url if product else "",
             })
 
         return {
             "id": order.id,
             "user_id": order.user_id,
+            "username": user.username if user else "—",
+            "email": user.email if user else "—",
             "total_price": order.total_price,
             "status": order.status,
             "created_at": order.created_at.isoformat(),
@@ -132,13 +138,17 @@ def get_user_orders(user_id: int):
 def get_all_orders(admin_user: User = Depends(require_admin)):
     with Session(engine) as session:
         orders = session.exec(select(Order)).all()
-        return [
-            {
+        result = []
+        for order in orders:
+            user = session.get(User, order.user_id)
+            if not user or user.is_admin:
+                continue
+            result.append({
                 "id": order.id,
                 "user_id": order.user_id,
+                "username": user.username if user else "—",
                 "total_price": order.total_price,
                 "status": order.status,
                 "created_at": order.created_at.isoformat(),
-            }
-            for order in orders
-        ]
+            })
+        return result

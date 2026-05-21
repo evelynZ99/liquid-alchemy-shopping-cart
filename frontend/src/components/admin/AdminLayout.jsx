@@ -12,7 +12,7 @@ const AdminLayout = ({ children }) => {
     // Ensure the same login key used by Login.jsx is removed
     localStorage.removeItem("liquidAlchemyCurrentUser");
 
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   }
 
   return (

@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 from sqlmodel import SQLModel, Field
 
 
@@ -13,6 +13,7 @@ class User(SQLModel, table=True):
     email: str = Field(max_length=255)
     password_hash: str = Field(max_length=255)
     is_admin: bool = False
+    date_of_birth: Optional[date] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -20,6 +21,7 @@ class UserCreate(SQLModel):
     username: str
     email: str
     password: str
+    date_of_birth: date
     is_admin: bool = False
     admin_key: Optional[str] = None
 
@@ -35,8 +37,13 @@ class UserPublic(SQLModel):
     email: str
     password_hash: str
     is_admin: bool
+    date_of_birth: Optional[date]
     created_at: datetime
 
+
+class UserUpdate(SQLModel):
+    username: str
+    date_of_birth: Optional[date] = None
 
 class UserRoleUpdate(SQLModel):
     is_admin: bool
