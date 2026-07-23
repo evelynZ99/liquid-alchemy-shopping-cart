@@ -1,0 +1,25 @@
+{
+  "name": "点餐系统 Demo V4.2",
+  "short_name": "点餐系统",
+  "description": "单机离线点餐、号牌轮换、订单队列、历史统计、文字导入菜单",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4ef",
+  "theme_color": "#111111",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

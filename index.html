@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>点餐系统 Demo V4.2</title>
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --panel: #ffffff;
+    --ink: #151515;
+    --muted: #6b6b6b;
+    --line: #d9d4c9;
+    --soft: #f0eee7;
+    --accent: #111111;
+    --ok: #147a3e;
+    --danger: #b42318;
+    --warn: #925d00;
+    --shadow: 0 8px 24px rgba(0,0,0,.08);
+    --radius: 16px;
+    --bottom-action-h: 68px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(246,244,239,.96);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 16px 10px;
+  }
+  .topbar, main { max-width: 1180px; margin: 0 auto; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .badge {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  nav {
+    max-width: 1180px;
+    margin: 10px auto 0;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  nav button {
+    appearance: none;
+    border: 1px solid #b9b3a7;
+    background: #fff;
+    color: #111;
+    padding: 9px 13px;
+    border-radius: 999px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  nav button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { padding: 14px 16px calc(var(--bottom-action-h) + 34px); }
+  .view { display: none; }
+  .view.active { display: block; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  h2, h3 { margin: 0 0 12px; }
+  h2 { font-size: 18px; }
+  h3 { font-size: 15px; }
+  .compact-stats {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .stat-mini {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 9px 10px;
+    min-height: 56px;
+  }
+  .stat-label { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+  .stat-value { font-weight: 900; font-size: 17px; line-height: 1.15; }
+  .stat-mini.revenue .stat-value { font-size: 20px; }
+  .section-title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 6px 0 10px; }
+  .section-title .hint { color: var(--muted); font-size: 12px; }
+  .order-list { display: grid; gap: 10px; }
+  .empty {
+    color: var(--muted);
+    border: 1px dashed var(--line);
+    background: rgba(255,255,255,.55);
+    border-radius: var(--radius);
+    padding: 18px;
+    text-align: center;
+  }
+  .swipe-row {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    touch-action: pan-y;
+    background: var(--ok);
+  }
+  .swipe-action {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 128px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 26px;
+    background: var(--ok);
+    color: #fff;
+    font-weight: 900;
+    border: 0;
+    z-index: 1;
+  }
+  .order-card {
+    position: relative;
+    z-index: 2;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px;
+    transition: transform .16s ease;
+    user-select: none;
+  }
+  .order-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .order-no { font-size: 22px; font-weight: 950; line-height: 1; }
+  .order-time { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .order-total { font-weight: 950; font-size: 18px; white-space: nowrap; }
+  .item-lines { display: grid; gap: 6px; }
+  .line-main { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .line-name { font-weight: 850; }
+  .line-qty { font-weight: 750; }
+  .line-sub { color: var(--muted); font-size: 12px; margin-left: 2px; }
+  .spice { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #842029; font-weight: 850; }
+  .spice.none { color: var(--muted); }
+  .dots { display: inline-flex; gap: 2px; }
+  .dot { width: 6px; height: 6px; border-radius: 999px; background: #d71920; display: inline-block; }
+  .note { font-size: 12px; color: var(--warn); background: #fff8e7; border: 1px solid #f2d69a; border-radius: 10px; padding: 4px 7px; width: fit-content; }
+  .bottom-order-button {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 80;
+    max-width: 760px;
+    margin: 0 auto;
+    height: var(--bottom-action-h);
+    border: 0;
+    border-radius: 18px;
+    background: #111;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 950;
+    box-shadow: 0 14px 30px rgba(0,0,0,.18);
+  }
+  .bottom-order-button.hidden { display: none; }
+  .grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .between { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+  input, select, textarea {
+    width: 100%; border: 1px solid var(--line); background: #fff; color: var(--ink);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  textarea { min-height: 54px; resize: vertical; }
+  .field { margin-bottom: 12px; }
+  .menu-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  .menu-card { border: 1px solid var(--line); background: var(--soft); border-radius: 14px; padding: 12px; }
+  .menu-card.clickable { cursor: pointer; transition: transform .12s ease, border-color .12s ease; }
+  .menu-card.clickable:active { transform: scale(.99); }
+  .menu-card.clickable:focus-visible { outline: 3px solid rgba(20,122,62,.25); }
+  .menu-card .name { font-weight: 900; }
+  .menu-card .meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .cart-list { display: grid; gap: 10px; }
+  .cart-line { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 12px; }
+  .addon-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .check-pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; background: var(--soft); font-size: 13px; }
+  .check-pill input { width: auto; }
+  .btn {
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+    border-radius: 12px; padding: 10px 13px; font-weight: 900;
+  }
+  .btn.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .btn.small { padding: 7px 9px; font-size: 12px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .hidden { display: none !important; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 800; }
+  .import-preview { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 12px; }
+  .import-preview table { margin: 0; }
+  .import-error { color: var(--danger); font-size: 13px; line-height: 1.5; }
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.35);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 16px;
+  }
+  .modal {
+    width: min(720px, 100%);
+    max-height: 88vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.25);
+  }
+  .detail-line { border-top: 1px solid var(--line); padding: 10px 0; }
+  .confirm-box { border: 1px solid #efb3aa; background: #fff4f2; border-radius: 14px; padding: 12px; margin-top: 12px; }
+  .update-toast {
+    position: fixed; left: 16px; right: 16px; bottom: calc(90px + env(safe-area-inset-bottom)); z-index: 160;
+    max-width: 560px; margin: 0 auto; background: #111; color: #fff; border-radius: 16px; padding: 13px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.2);
+  }
+  .update-toast .btn { background: #fff; color: #111; border-color: #fff; }
+  .update-toast .btn.secondary { background: transparent; color: #fff; border-color: rgba(255,255,255,.38); }
+  @media (max-width: 780px) {
+    .grid, .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .menu-list { grid-template-columns: 1fr; }
+    .compact-stats { grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 6px; }
+    .stat-mini { padding: 8px 7px; min-height: 52px; }
+    .stat-value { font-size: 15px; }
+    .stat-mini.revenue .stat-value { font-size: 17px; }
+  }
+</style>
+
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#111111" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="点餐系统" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+</head>
+<body>
+<header>
+  <div class="topbar">
+    <div>
+      <h1>点餐系统 Demo V4.2</h1>
+      <div id="bizDateLabel" class="sub">营业日：-</div>
+    </div>
+    <div id="storageBadge" class="badge">本地数据库：初始化中</div>
+  </div>
+  <nav>
+    <button class="tab active" data-view="queueView">订单队列</button>
+    <button class="tab" data-view="statsView">今日统计</button>
+    <button class="tab" data-view="historyView">历史记录</button>
+    <button class="tab" data-view="menuView">菜单设置</button>
+    <button class="tab" data-view="settingsView">系统设置</button>
+  </nav>
+</header>
+
+<main>
+  <div id="storageNotice" class="panel hidden" style="margin-bottom:12px;"></div>
+
+  <section id="queueView" class="view active">
+    <div class="compact-stats">
+      <div class="stat-mini revenue"><div class="stat-label">今日营业额</div><div id="miniRevenue" class="stat-value">$0.00</div></div>
+      <div class="stat-mini"><div class="stat-label">进行中</div><div id="miniActive" class="stat-value">0</div></div>
+      <div class="stat-mini"><div class="stat-label">已完成</div><div id="miniCompleted" class="stat-value">0</div></div>
+      <div class="stat-mini"><div class="stat-label">已取消</div><div id="miniCancelled" class="stat-value">0</div></div>
+    </div>
+    <div class="section-title">
+      <h2>进行中订单</h2>
+      <div class="hint">点开查看详情；右滑露出完成按钮</div>
+    </div>
+    <div id="activeOrders" class="order-list"></div>
+  </section>
+
+  <section id="orderView" class="view">
+    <div class="between" style="margin-bottom:12px;">
+      <div>
+        <h2 style="margin:0;">点单</h2>
+        <div id="orderBizDateLabel" class="muted">营业日：-</div>
+      </div>
+      <button id="backToQueueBtn" class="btn secondary">返回订单队列</button>
+    </div>
+    <div class="grid">
+      <div class="panel">
+        <div class="between">
+          <h3>选择菜品</h3>
+          <select id="categoryFilter" style="max-width:180px;"></select>
+        </div>
+        <div id="menuList" class="menu-list"></div>
+      </div>
+      <div class="panel">
+        <div class="between">
+          <h3>本单内容</h3>
+          <strong id="cartTotal">$0.00</strong>
+        </div>
+        <div id="cartList" class="cart-list"></div>
+        <div style="height:12px"></div>
+        <button id="submitOrderBtn" class="btn" style="width:100%;">提交订单</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="statsView" class="view">
+    <div class="grid-3">
+      <div class="panel"><div class="stat-label">今日营业额</div><div id="statsRevenue" class="stat-value">$0.00</div></div>
+      <div class="panel"><div class="stat-label">完成订单数</div><div id="statsCompleted" class="stat-value">0</div></div>
+      <div class="panel"><div class="stat-label">客单价</div><div id="statsAvg" class="stat-value">$0.00</div></div>
+    </div>
+    <div class="panel" style="margin-top:14px;">
+      <h3>热门菜品</h3>
+      <div id="popularList"></div>
+    </div>
+  </section>
+
+  <section id="historyView" class="view">
+    <div class="panel">
+      <div class="between">
+        <h2>历史记录</h2>
+        <div class="row">
+          <input id="historyDate" type="date" style="width:auto;" />
+          <button id="loadHistoryBtn" class="btn secondary">加载日期</button>
+          <button id="loadAllHistoryBtn" class="btn secondary">加载全部</button>
+        </div>
+      </div>
+      <p class="muted">已完成、已取消订单移到这里查看。营业额只统计已完成订单。</p>
+      <div id="historyList" class="order-list"></div>
+    </div>
+  </section>
+
+  <section id="menuView" class="view">
+    <div class="grid">
+      <div class="panel">
+        <h2>菜品管理</h2>
+        <div class="grid-4">
+          <div class="field"><label>名称</label><input id="newItemName" placeholder="经典烤苕皮" /></div>
+          <div class="field"><label>副名称</label><input id="newItemEnglishName" placeholder="Grilled Sweet Potato Pasta，可不填" /></div>
+          <div class="field"><label>分类</label><input id="newItemCategory" placeholder="未分类" /></div>
+          <div class="field"><label>价格</label><input id="newItemPrice" type="number" step="0.01" placeholder="20" /></div>
+        </div>
+        <div class="row">
+          <button id="addItemBtn" class="btn">新增菜品</button>
+          <button id="openTextImportBtn" class="btn secondary">从文字导入菜单</button>
+        </div>
+        <div style="height:12px"></div>
+        <div id="menuManageList"></div>
+      </div>
+      <div class="panel">
+        <h2>加料管理</h2>
+        <p class="muted">辣度不放在加料里；辣度是每个菜品的独立字段。</p>
+        <div class="grid-2">
+          <div class="field"><label>名称</label><input id="newAddonName" placeholder="加蒜" /></div>
+          <div class="field"><label>价格</label><input id="newAddonPrice" type="number" step="0.01" placeholder="1" /></div>
+        </div>
+        <button id="addAddonBtn" class="btn">新增加料</button>
+        <div style="height:12px"></div>
+        <div id="addonManageList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="settingsView" class="view">
+    <div class="grid">
+      <div class="panel">
+        <h2>编号与营业日</h2>
+        <div class="field"><label>编号模式</label><select id="numberMode"><option value="token">号牌轮换</option><option value="auto">自动编号</option></select></div>
+        <div class="grid-3">
+          <div class="field"><label>号牌数量</label><input id="tokenCount" type="number" min="1" /></div>
+          <div class="field"><label>自动编号前缀</label><input id="autoPrefix" /></div>
+          <div class="field"><label>营业日切换小时</label><input id="cutoffHour" type="number" min="0" max="23" /></div>
+        </div>
+        <div class="field"><label>货币符号</label><input id="currency" /></div>
+        <button id="saveSettingsBtn" class="btn">保存设置</button>
+      </div>
+      <div class="panel">
+        <h2>备份与更新</h2>
+        <button id="checkUpdateBtn" class="btn secondary">检查更新</button>
+        <p id="updateStatus" class="muted"></p>
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0;" />
+        <button id="exportBtn" class="btn secondary">导出全部数据 JSON</button>
+        <div class="field" style="margin-top:12px;"><label>导入备份 JSON</label><input id="importInput" type="file" accept="application/json" /></div>
+        <button id="resetBtn" class="btn danger">清空全部订单与设置</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<button id="bottomOrderBtn" class="bottom-order-button">点单</button>
+
+<div id="orderModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="between">
+      <h2 id="modalTitle">订单详情</h2>
+      <button id="closeModalBtn" class="btn secondary small">关闭</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div id="itemConfigModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="between">
+      <h2 id="itemConfigTitle">添加菜品</h2>
+      <button id="closeItemConfigBtn" class="btn secondary small">关闭</button>
+    </div>
+    <div id="itemConfigBody"></div>
+  </div>
+</div>
+
+<div id="textImportModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="between">
+      <h2>从文字导入菜单</h2>
+      <button id="closeTextImportBtn" class="btn secondary small">关闭</button>
+    </div>
+    <p class="muted">适合从备忘录复制菜单。一行一个菜品，识别后先预览，确认后才写入菜单。</p>
+    <div class="field">
+      <label>菜单文字</label>
+      <textarea id="textImportInput" style="min-height:180px;" placeholder="每行一个菜品，格式：名称-副名称-价格，也可以只写名称-价格。各种横杠都可以做分隔符，比如 -、—、——、_。也支持 |、｜、丨。
+
+例如：
+经典烤苕皮-Grilled Sweet Potato Pasta-20
+Grilled Sweet Potato Pasta-20
+经典烤苕皮-20"></textarea>
+    </div>
+    <div class="row">
+      <button id="parseTextImportBtn" class="btn">识别菜单</button>
+      <button id="clearTextImportBtn" class="btn secondary">清空</button>
+    </div>
+    <div id="textImportPreview"></div>
+    <div class="row" style="margin-top:14px;">
+      <button id="confirmTextImportBtn" class="btn hidden">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<div id="updateToast" class="update-toast hidden">
+  <div class="between">
+    <strong>检测到新版本</strong>
+    <div class="row">
+      <button id="dismissUpdateBtn" class="btn secondary small">稍后</button>
+      <button id="applyUpdateBtn" class="btn small">立即更新</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const APP_VERSION = "v4.2-pwa";
+  const DB_NAME = "bbq_order_demo_db_v2";
+  const DB_VERSION = 1;
+  const LS_SETTINGS = "bbq_order_demo_settings_v2";
+  const LS_MENU = "bbq_order_demo_menu_v2";
+  const LS_ADDONS = "bbq_order_demo_addons_v2";
+  const LS_ORDERS_FALLBACK = "bbq_order_demo_orders_fallback_v2";
+
+  const DEFAULT_SETTINGS = { numberMode: "token", tokenCount: 8, autoPrefix: "A", autoCounter: 1, cutoffHour: 4, currency: "$" };
+  const DEFAULT_MENU = [];
+  const DEFAULT_ADDONS = [];
+  const SPICE = {
+    none: { label: "不辣", level: 0 },
+    mild: { label: "微辣", level: 1 },
+    normal: { label: "正常辣", level: 2 },
+    hot: { label: "特辣", level: 3 }
+  };
+
+  let settings = loadJSON(LS_SETTINGS, DEFAULT_SETTINGS);
+  let menu = loadJSON(LS_MENU, DEFAULT_MENU).map(normalizeMenuItem);
+  let addons = loadJSON(LS_ADDONS, DEFAULT_ADDONS).map(normalizeAddon).filter(a => !isLegacySpiceAddon(a.name));
+  let cart = [];
+  let todayOrders = [];
+  let store = null;
+  let pendingSW = null;
+
+  const $ = id => document.getElementById(id);
+
+  function uid(prefix="id") { return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`; }
+  function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+  function loadJSON(key, fallback) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : clone(fallback); } catch { return clone(fallback); } }
+  function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  function money(n) { return `${settings.currency || "$"}${Number(n || 0).toFixed(2)}`; }
+  function nowISO() { return new Date().toISOString(); }
+  function pad(num, size=3) { return String(num).padStart(size, "0"); }
+  function todayInputDate() { return getBusinessDate(); }
+  function escapeHTML(s) { return String(s ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
+  function formatSmallTime(iso) { if (!iso) return "-"; return new Date(iso).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }); }
+  function formatFullTime(iso) { if (!iso) return "-"; return new Date(iso).toLocaleString("zh-CN", { hour12: false }); }
+  function getBusinessDate(date = new Date()) { const d = new Date(date); if (d.getHours() < Number(settings.cutoffHour || 0)) d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${pad(d.getMonth()+1,2)}-${pad(d.getDate(),2)}`; }
+  function normalizeMenuItem(x) { return { id: x.id || uid("item"), name: x.name || "未命名", englishName: x.englishName || x.enName || "", category: x.category || "未分类", price: Number(x.price || 0), active: x.active !== false }; }
+  function normalizeAddon(x) { return { id: x.id || uid("addon"), name: x.name || "未命名", price: Number(x.price || 0), active: x.active !== false }; }
+  function isLegacySpiceAddon(name) { return ["不辣", "加辣", "微辣", "正常辣", "特辣"].includes(String(name || "").trim()); }
+  function spiceFromLegacyAddon(name) {
+    const n = String(name || "").trim();
+    if (n === "不辣") return "none";
+    if (n === "微辣") return "mild";
+    if (n === "加辣" || n === "正常辣") return "normal";
+    if (n === "特辣") return "hot";
+    return null;
+  }
+  function normalizeSpiceKey(key) { return SPICE[key] ? key : "none"; }
+  function spiceMeta(key) { return SPICE[normalizeSpiceKey(key)]; }
+  function spiceHTML(key) { const s = spiceMeta(key); const dots = Array.from({length: s.level}, () => `<span class="dot"></span>`).join(""); return `<span class="spice ${s.level ? "" : "none"}">${s.label}${dots ? `<span class="dots">${dots}</span>` : ""}</span>`; }
+  function lineTotal(line) { const base = Number(line.qty || 0) * Number(line.unitPrice || 0); const extra = (line.addons || []).reduce((sum, a) => sum + Number(a.price || 0), 0) * Number(line.qty || 0); return Number((base + extra).toFixed(2)); }
+  function orderTotal(items) { return Number((items || []).reduce((sum, line) => sum + lineTotal(line), 0).toFixed(2)); }
+  function migrateOrder(order) {
+    const o = clone(order);
+    o.status = o.status || "active";
+    o.bizDate = o.bizDate || getBusinessDate(o.createdAt ? new Date(o.createdAt) : new Date());
+    o.items = (o.items || []).map(item => {
+      let spiceKey = normalizeSpiceKey(item.spiceLevel || item.spiceKey || "none");
+      const cleanAddons = [];
+      for (const a of (item.addons || [])) {
+        const legacySpice = spiceFromLegacyAddon(a.name);
+        if (legacySpice) { spiceKey = legacySpice; continue; }
+        cleanAddons.push({ addonId: a.addonId || a.id || "", name: a.name || "", price: Number(a.price || 0) });
+      }
+      return {
+        lineId: item.lineId || uid("line"),
+        menuItemId: item.menuItemId || item.id || "",
+        name: item.name || "未命名",
+        englishName: item.englishName || item.enName || "",
+        unitPrice: Number(item.unitPrice ?? item.price ?? 0),
+        qty: Number(item.qty || 1),
+        addons: cleanAddons,
+        spiceLevel: spiceKey,
+        spiceLabel: spiceMeta(spiceKey).label,
+        note: item.note || "",
+        lineTotal: Number(item.lineTotal || 0) || undefined
+      };
+    });
+    if ((!o.items || o.items.length === 0) && Array.isArray(o.addons)) o.items = [];
+    o.total = Number(o.total || orderTotal(o.items));
+    o.priceSnapshotVersion = 4;
+    return o;
+  }
+
+  const IndexedStore = {
+    db: null,
+    async init() {
+      return new Promise((resolve, reject) => {
+        if (!("indexedDB" in window)) return reject(new Error("IndexedDB unavailable"));
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("orders")) {
+            const os = db.createObjectStore("orders", { keyPath: "id" });
+            os.createIndex("bizDate", "bizDate", { unique: false });
+            os.createIndex("status", "status", { unique: false });
+            os.createIndex("createdAt", "createdAt", { unique: false });
+          }
+        };
+        req.onsuccess = () => { this.db = req.result; resolve(); };
+        req.onerror = () => reject(req.error);
+      });
+    },
+    tx(mode="readonly") { return this.db.transaction("orders", mode).objectStore("orders"); },
+    async put(order) { return new Promise((resolve, reject) => { const tx = this.db.transaction("orders", "readwrite"); tx.objectStore("orders").put(migrateOrder(order)); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); },
+    async getAll() { return new Promise((resolve, reject) => { const req = this.tx().getAll(); req.onsuccess = () => resolve((req.result || []).map(migrateOrder)); req.onerror = () => reject(req.error); }); },
+    async getByDate(bizDate) { return new Promise((resolve, reject) => { const req = this.tx().index("bizDate").getAll(bizDate); req.onsuccess = () => resolve((req.result || []).map(migrateOrder)); req.onerror = () => reject(req.error); }); },
+    async clear() { return new Promise((resolve, reject) => { const tx = this.db.transaction("orders", "readwrite"); tx.objectStore("orders").clear(); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); }
+  };
+  const FallbackStore = {
+    async init() {},
+    async getAll() { return loadJSON(LS_ORDERS_FALLBACK, []).map(migrateOrder); },
+    async getByDate(bizDate) { return (await this.getAll()).filter(o => o.bizDate === bizDate); },
+    async put(order) { const all = await this.getAll(); const next = migrateOrder(order); const i = all.findIndex(o => o.id === next.id); if (i >= 0) all[i] = next; else all.push(next); saveJSON(LS_ORDERS_FALLBACK, all); },
+    async clear() { saveJSON(LS_ORDERS_FALLBACK, []); }
+  };
+
+  async function initStore() {
+    try { await IndexedStore.init(); store = IndexedStore; $("storageBadge").textContent = "本地数据库：IndexedDB"; }
+    catch { store = FallbackStore; await store.init(); $("storageBadge").textContent = "本地数据库：localStorage 备用"; $("storageNotice").textContent = "当前浏览器无法使用 IndexedDB，已切换到 localStorage 备用模式。正式使用请定期导出备份。"; $("storageNotice").classList.remove("hidden"); }
+  }
+
+  async function loadToday() {
+    todayOrders = (await store.getByDate(getBusinessDate())).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+    $("bizDateLabel").textContent = `营业日：${getBusinessDate()}`;
+    $("orderBizDateLabel").textContent = `营业日：${getBusinessDate()}`;
+    renderQueue(); renderStats();
+  }
+
+  function persistCatalog() { saveJSON(LS_SETTINGS, settings); saveJSON(LS_MENU, menu); saveJSON(LS_ADDONS, addons); }
+  function activeOrders() { return todayOrders.filter(o => o.status === "active"); }
+  function completedOrders() { return todayOrders.filter(o => o.status === "completed"); }
+  function cancelledOrders() { return todayOrders.filter(o => o.status === "cancelled"); }
+  function activeTokenSet() { return new Set(activeOrders().filter(o => o.numberMode === "token").map(o => Number(o.displayNo))); }
+  function nextToken() { const used = activeTokenSet(); for (let i=1; i<=Number(settings.tokenCount || 0); i++) if (!used.has(i)) return i; return null; }
+  function nextAutoNo() { return `${settings.autoPrefix || "A"}${pad(settings.autoCounter || 1, 3)}`; }
+
+  async function showView(viewId) {
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === viewId));
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.view === viewId));
+    $("bottomOrderBtn").classList.toggle("hidden", viewId !== "queueView");
+    if (viewId === "queueView" || viewId === "statsView") await loadToday();
+    if (viewId === "orderView") { renderMenuList(); renderCart(); }
+    if (viewId === "menuView") renderCatalogManagement();
+  }
+
+  function renderQueue() {
+    const active = activeOrders();
+    $("activeOrders").innerHTML = active.length ? active.map(orderRowHTML).join("") : `<div class="empty">暂无进行中订单</div>`;
+    active.forEach(order => setupSwipe(order.id));
+  }
+  function renderStats() {
+    const revenue = completedOrders().reduce((s,o)=>s+Number(o.total||0),0);
+    const completed = completedOrders().length;
+    $("miniRevenue").textContent = money(revenue);
+    $("miniActive").textContent = activeOrders().length;
+    $("miniCompleted").textContent = completed;
+    $("miniCancelled").textContent = cancelledOrders().length;
+    $("statsRevenue").textContent = money(revenue);
+    $("statsCompleted").textContent = completed;
+    $("statsAvg").textContent = money(completed ? revenue / completed : 0);
+    renderPopular();
+  }
+  function renderPopular() {
+    const map = new Map();
+    completedOrders().forEach(o => (o.items || []).forEach(line => map.set(line.name, (map.get(line.name) || 0) + Number(line.qty || 0))));
+    const rows = [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
+    $("popularList").innerHTML = rows.length ? `<table><thead><tr><th>菜品</th><th>数量</th></tr></thead><tbody>${rows.map(([name,qty])=>`<tr><td>${escapeHTML(name)}</td><td>${qty}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">暂无已完成订单</div>`;
+  }
+
+  function orderRowHTML(order) {
+    return `<div class="swipe-row" data-order-id="${order.id}">
+      <button class="swipe-action" data-complete-id="${order.id}">完成</button>
+      <article class="order-card" data-card-id="${order.id}">
+        <div class="order-head">
+          <div><div class="order-no">${escapeHTML(order.displayNo)}</div><div class="order-time">${formatSmallTime(order.createdAt)}</div></div>
+          <div class="order-total">${money(order.total)}</div>
+        </div>
+        <div class="item-lines">${(order.items || []).map(itemLineHTML).join("")}</div>
+      </article>
+    </div>`;
+  }
+  function itemLineHTML(line) {
+    const addonsText = (line.addons || []).length ? `<div class="line-sub">加料：${escapeHTML(line.addons.map(a=>a.name).join("、"))}</div>` : "";
+    const note = line.note ? `<div class="note">备注：${escapeHTML(line.note)}</div>` : "";
+    return `<div class="order-item"><div class="line-main"><span class="line-name">${escapeHTML(line.name)}</span><span class="line-qty">× ${Number(line.qty || 0)}</span>${spiceHTML(line.spiceLevel)}</div>${addonsText}${note}</div>`;
+  }
+
+  function setupSwipe(orderId) {
+    const row = document.querySelector(`.swipe-row[data-order-id="${orderId}"]`);
+    if (!row) return;
+    const card = row.querySelector(".order-card");
+    const actionWidth = 96;
+    let startX = 0, startY = 0, currentX = 0, dragging = false, moved = false;
+    const close = () => { currentX = 0; card.style.transform = "translateX(0px)"; };
+    row.querySelector(".swipe-action").onclick = async e => { e.stopPropagation(); await completeOrder(orderId); close(); };
+    card.onclick = () => { if (!moved) openOrderDetail(orderId); moved = false; };
+    card.addEventListener("pointerdown", e => {
+      startX = e.clientX; startY = e.clientY; dragging = true; moved = false;
+      card.setPointerCapture(e.pointerId);
+    });
+    card.addEventListener("pointermove", e => {
+      if (!dragging) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        moved = true;
+        currentX = Math.min(0, Math.max(-actionWidth, dx));
+        card.style.transform = `translateX(${currentX}px)`;
+      }
+    });
+    card.addEventListener("pointerup", () => {
+      if (!dragging) return;
+      dragging = false;
+      currentX = currentX < -55 ? -actionWidth : 0;
+      card.style.transform = `translateX(${currentX}px)`;
+      setTimeout(()=>{ moved = false; }, 0);
+    });
+    card.addEventListener("pointercancel", close);
+  }
+
+  function openOrderDetail(orderId) {
+    const order = todayOrders.find(o => o.id === orderId);
+    if (!order) return;
+    $("modalTitle").textContent = `订单详情 · ${order.displayNo}`;
+    $("modalBody").innerHTML = `
+      <div class="muted">下单时间：${formatFullTime(order.createdAt)}</div>
+      <div style="height:8px"></div>
+      ${(order.items || []).map(line => `<div class="detail-line">
+        <div class="between"><strong>${escapeHTML(line.name)} × ${Number(line.qty || 0)}</strong>${spiceHTML(line.spiceLevel)}</div>
+        ${(line.addons || []).length ? `<div class="muted">加料：${escapeHTML(line.addons.map(a=>a.name).join("、"))}</div>` : ""}
+        ${line.note ? `<div class="note" style="margin-top:6px;">备注：${escapeHTML(line.note)}</div>` : ""}
+      </div>`).join("")}
+      <div class="between" style="border-top:1px solid var(--line);padding-top:12px;margin-top:6px;"><strong>合计</strong><strong>${money(order.total)}</strong></div>
+      <div class="row" style="margin-top:14px;"><button class="btn ok" id="modalCompleteBtn">完成</button><button class="btn danger" id="modalCancelBtn">取消订单</button></div>
+      <div id="cancelConfirm" class="confirm-box hidden"><strong>确认取消该订单？</strong><div class="row" style="margin-top:10px;"><button id="backCancelBtn" class="btn secondary">返回</button><button id="confirmCancelBtn" class="btn danger">确认取消</button></div></div>`;
+    $("orderModal").classList.remove("hidden");
+    $("modalCompleteBtn").onclick = async () => { await completeOrder(orderId); closeModal(); };
+    $("modalCancelBtn").onclick = () => $("cancelConfirm").classList.remove("hidden");
+    $("backCancelBtn").onclick = () => $("cancelConfirm").classList.add("hidden");
+    $("confirmCancelBtn").onclick = async () => { await cancelOrder(orderId); closeModal(); };
+  }
+  function closeModal() { $("orderModal").classList.add("hidden"); $("modalBody").innerHTML = ""; }
+
+  async function completeOrder(orderId) { const o = todayOrders.find(x => x.id === orderId); if (!o) return; o.status = "completed"; o.completedAt = nowISO(); o.cancelledAt = null; await store.put(o); await loadToday(); }
+  async function cancelOrder(orderId) { const o = todayOrders.find(x => x.id === orderId); if (!o) return; o.status = "cancelled"; o.cancelledAt = nowISO(); o.completedAt = null; await store.put(o); await loadToday(); }
+
+  function renderMenuList() {
+    const activeMenu = menu.filter(x => x.active);
+    const cats = ["全部", ...new Set(activeMenu.map(x => x.category))];
+    const old = $("categoryFilter").value || "全部";
+    $("categoryFilter").innerHTML = cats.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join("");
+    $("categoryFilter").value = cats.includes(old) ? old : "全部";
+
+    const items = activeMenu.filter(x => $("categoryFilter").value === "全部" || x.category === $("categoryFilter").value);
+    if (!activeMenu.length) {
+      $("menuList").innerHTML = `<div class="empty" style="grid-column:1/-1;">暂无可用菜品<br><span class="muted">请先到菜单设置中添加菜品</span></div>`;
+      return;
+    }
+    $("menuList").innerHTML = items.length
+      ? items.map(item => `<div class="menu-card clickable" role="button" tabindex="0" data-config-item="${item.id}"><div class="name">${escapeHTML(item.name)}</div>${item.englishName ? `<div class="meta">${escapeHTML(item.englishName)}</div>` : ""}<div class="meta">${escapeHTML(item.category)} · ${money(item.price)}</div></div>`).join("")
+      : `<div class="empty" style="grid-column:1/-1;">当前分类暂无可用菜品</div>`;
+
+    document.querySelectorAll("[data-config-item]").forEach(card => {
+      card.onclick = () => openItemConfig(card.dataset.configItem);
+      card.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openItemConfig(card.dataset.configItem); } };
+    });
+  }
+
+  function openItemConfig(itemId) {
+    const item = menu.find(x => x.id === itemId && x.active);
+    if (!item) return;
+    $("itemConfigTitle").textContent = `添加 · ${item.name}`;
+    const activeAddons = addons.filter(a => a.active);
+    const addonChecks = activeAddons.map(a => `<label class="check-pill"><input type="checkbox" data-config-addon="${a.id}">${escapeHTML(a.name)}${a.price ? ` +${money(a.price)}` : ""}</label>`).join("");
+    $("itemConfigBody").innerHTML = `
+      ${item.englishName ? `<div class="muted">${escapeHTML(item.englishName)}</div>` : ""}
+      <div class="muted">${escapeHTML(item.category)} · ${money(item.price)}</div>
+      <div style="height:10px"></div>
+      <div class="grid-2">
+        <div class="field"><label>数量</label><input id="configQty" type="number" min="1" value="1" /></div>
+        <div class="field"><label>辣度</label><select id="configSpice">${Object.entries(SPICE).map(([k,v])=>`<option value="${k}">${v.label}${v.level ? " · "+"●".repeat(v.level) : ""}</option>`).join("")}</select></div>
+      </div>
+      <div class="field"><label>加料</label><div class="addon-grid">${addonChecks || `<span class="muted">暂无启用加料</span>`}</div></div>
+      <div class="field"><label>备注</label><textarea id="configNote" placeholder="没有备注可以留空"></textarea></div>
+      <div class="between"><span class="muted">小计</span><strong id="configPreviewTotal">${money(item.price)}</strong></div>
+      <div style="height:12px"></div>
+      <button id="confirmAddItemBtn" class="btn" style="width:100%;">加入本单</button>`;
+    $("itemConfigModal").classList.remove("hidden");
+
+    const readDraft = () => {
+      const qty = Math.max(1, Number($("configQty").value || 1));
+      const selectedAddons = [...document.querySelectorAll("[data-config-addon]:checked")].map(chk => {
+        const addon = addons.find(a => a.id === chk.dataset.configAddon);
+        return addon ? { addonId: addon.id, name: addon.name, price: Number(addon.price) } : null;
+      }).filter(Boolean);
+      return { lineId: uid("line"), menuItemId: item.id, name: item.name, englishName: item.englishName || "", unitPrice: Number(item.price), qty, addons: selectedAddons, spiceLevel: $("configSpice").value, note: $("configNote").value.trim() };
+    };
+    const updatePreview = () => { $("configPreviewTotal").textContent = money(lineTotal(readDraft())); };
+    $("configQty").oninput = updatePreview;
+    $("configSpice").onchange = updatePreview;
+    $("configNote").oninput = () => {};
+    document.querySelectorAll("[data-config-addon]").forEach(chk => chk.onchange = updatePreview);
+    $("confirmAddItemBtn").onclick = () => { cart.push(readDraft()); closeItemConfig(); renderCart(); };
+  }
+
+  function closeItemConfig() { $("itemConfigModal").classList.add("hidden"); $("itemConfigBody").innerHTML = ""; }
+
+  function renderCart() {
+    $("cartTotal").textContent = money(orderTotal(cart));
+    $("cartList").innerHTML = cart.length ? cart.map((line, idx) => cartLineHTML(line, idx)).join("") : `<div class="empty">还没有选择菜品</div>`;
+    document.querySelectorAll("[data-qty]").forEach(inp => inp.oninput = () => { cart[Number(inp.dataset.qty)].qty = Math.max(1, Number(inp.value || 1)); renderCart(); });
+    document.querySelectorAll("[data-spice]").forEach(sel => sel.onchange = () => { const line = cart[Number(sel.dataset.spice)]; line.spiceLevel = sel.value; renderCart(); });
+    document.querySelectorAll("[data-note]").forEach(txt => txt.oninput = () => { cart[Number(txt.dataset.note)].note = txt.value; });
+    document.querySelectorAll("[data-remove]").forEach(btn => btn.onclick = () => { cart.splice(Number(btn.dataset.remove), 1); renderCart(); });
+    document.querySelectorAll("[data-addon]").forEach(chk => chk.onchange = () => {
+      const idx = Number(chk.dataset.line); const addon = addons.find(a => a.id === chk.dataset.addon); if (!addon) return;
+      const line = cart[idx];
+      if (chk.checked) line.addons.push({ addonId: addon.id, name: addon.name, price: Number(addon.price) });
+      else line.addons = line.addons.filter(a => a.addonId !== addon.id);
+      renderCart();
+    });
+  }
+  function cartLineHTML(line, idx) {
+    const addonChecks = addons.filter(a=>a.active).map(a => {
+      const checked = (line.addons || []).some(x => x.addonId === a.id);
+      return `<label class="check-pill"><input type="checkbox" data-line="${idx}" data-addon="${a.id}" ${checked ? "checked" : ""}>${escapeHTML(a.name)}${a.price ? ` +${money(a.price)}` : ""}</label>`;
+    }).join("");
+    return `<div class="cart-line">
+      <div class="between"><strong>${escapeHTML(line.name)}</strong><button class="btn secondary small" data-remove="${idx}">移除</button></div>
+      <div class="grid-2" style="margin-top:10px;">
+        <div class="field"><label>数量</label><input data-qty="${idx}" type="number" min="1" value="${Number(line.qty || 1)}" /></div>
+        <div class="field"><label>辣度</label><select data-spice="${idx}">${Object.entries(SPICE).map(([k,v])=>`<option value="${k}" ${line.spiceLevel===k?"selected":""}>${v.label}${v.level?" · "+"●".repeat(v.level):""}</option>`).join("")}</select></div>
+      </div>
+      <div class="field"><label>加料</label><div class="addon-grid">${addonChecks || `<span class="muted">暂无启用加料</span>`}</div></div>
+      <div class="field"><label>备注</label><textarea data-note="${idx}" placeholder="没有备注可以留空">${escapeHTML(line.note || "")}</textarea></div>
+      <div class="between"><span class="muted">小计</span><strong>${money(lineTotal(line))}</strong></div>
+    </div>`;
+  }
+  async function submitOrder() {
+    if (!cart.length) return alert("请先选择菜品");
+    await loadToday();
+    let displayNo, numberMode = settings.numberMode;
+    if (numberMode === "token") { const token = nextToken(); if (!token) return alert("号牌已全部占用，暂时不能提交新订单"); displayNo = String(token); }
+    else { displayNo = nextAutoNo(); settings.autoCounter = Number(settings.autoCounter || 1) + 1; persistCatalog(); }
+    const frozenItems = cart.map(line => {
+      const spiceKey = normalizeSpiceKey(line.spiceLevel);
+      const item = { ...clone(line), spiceLevel: spiceKey, spiceLabel: spiceMeta(spiceKey).label };
+      item.lineTotal = lineTotal(item);
+      return item;
+    });
+    const order = { id: uid("order"), displayNo, numberMode, bizDate: getBusinessDate(), createdAt: nowISO(), completedAt: null, cancelledAt: null, status: "active", items: frozenItems, total: orderTotal(frozenItems), priceSnapshotVersion: 4 };
+    await store.put(order);
+    cart = [];
+    await showView("queueView");
+  }
+
+  function renderCatalogManagement() {
+    $("menuManageList").innerHTML = menu.length
+      ? `<table><thead><tr><th>名称</th><th>副名称</th><th>分类</th><th>价格</th><th>状态</th><th></th></tr></thead><tbody>${menu.map((item,i)=>`<tr><td><input data-menu-name="${i}" value="${escapeHTML(item.name)}"></td><td><input data-menu-en="${i}" value="${escapeHTML(item.englishName || "")}"></td><td><input data-menu-cat="${i}" value="${escapeHTML(item.category)}"></td><td><input data-menu-price="${i}" type="number" step="0.01" value="${item.price}"></td><td>${item.active?"启用":"停用"}</td><td><button class="btn secondary small" data-toggle-menu="${i}">${item.active?"停用":"启用"}</button></td></tr>`).join("")}</tbody></table>`
+      : `<div class="empty">暂无菜品。可手动新增，或点击“从文字导入菜单”。</div>`;
+    $("addonManageList").innerHTML = addons.length
+      ? `<table><thead><tr><th>加料</th><th>价格</th><th>状态</th><th></th></tr></thead><tbody>${addons.map((a,i)=>`<tr><td><input data-addon-name="${i}" value="${escapeHTML(a.name)}"></td><td><input data-addon-price="${i}" type="number" step="0.01" value="${a.price}"></td><td>${a.active?"启用":"停用"}</td><td><button class="btn secondary small" data-toggle-addon="${i}">${a.active?"停用":"启用"}</button></td></tr>`).join("")}</tbody></table>`
+      : `<div class="empty">暂无加料。辣度不用放在加料里。</div>`;
+    document.querySelectorAll("[data-menu-name]").forEach(el => el.onchange = () => { menu[el.dataset.menuName].name = el.value.trim() || "未命名"; persistCatalog(); renderMenuList(); });
+    document.querySelectorAll("[data-menu-en]").forEach(el => el.onchange = () => { menu[el.dataset.menuEn].englishName = el.value.trim(); persistCatalog(); renderMenuList(); });
+    document.querySelectorAll("[data-menu-cat]").forEach(el => el.onchange = () => { menu[el.dataset.menuCat].category = el.value.trim() || "未分类"; persistCatalog(); renderMenuList(); });
+    document.querySelectorAll("[data-menu-price]").forEach(el => el.onchange = () => { menu[el.dataset.menuPrice].price = Number(el.value || 0); persistCatalog(); renderMenuList(); });
+    document.querySelectorAll("[data-toggle-menu]").forEach(btn => btn.onclick = () => { const i = Number(btn.dataset.toggleMenu); menu[i].active = !menu[i].active; persistCatalog(); renderCatalogManagement(); renderMenuList(); });
+    document.querySelectorAll("[data-addon-name]").forEach(el => el.onchange = () => { addons[el.dataset.addonName].name = el.value.trim() || "未命名"; persistCatalog(); });
+    document.querySelectorAll("[data-addon-price]").forEach(el => el.onchange = () => { addons[el.dataset.addonPrice].price = Number(el.value || 0); persistCatalog(); });
+    document.querySelectorAll("[data-toggle-addon]").forEach(btn => btn.onclick = () => { const i = Number(btn.dataset.toggleAddon); addons[i].active = !addons[i].active; persistCatalog(); renderCatalogManagement(); });
+  }
+
+  let pendingMenuImport = [];
+
+  function openTextImport() {
+    pendingMenuImport = [];
+    $("textImportInput").value = "";
+    $("textImportPreview").innerHTML = "";
+    $("confirmTextImportBtn").classList.add("hidden");
+    $("textImportModal").classList.remove("hidden");
+  }
+
+  function closeTextImport() {
+    pendingMenuImport = [];
+    $("textImportModal").classList.add("hidden");
+  }
+
+  function parseMenuImportText(raw) {
+    const errors = [];
+    const parsed = [];
+    const byName = new Map();
+    const lines = String(raw || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const separatorPattern = /\s*(?:—+|-|_|｜|\||丨)\s*/;
+    lines.forEach((original, idx) => {
+      const line = original.replace(/^\s*\d+\s*[\.、\)）:：—\-_｜|丨]?\s*/, "").trim();
+      const parts = line.split(separatorPattern).map(x => x.trim()).filter(Boolean);
+      if (parts.length < 2) {
+        errors.push(`第 ${idx + 1} 行无法识别：${original}`);
+        return;
+      }
+      const priceText = parts[parts.length - 1];
+      if (!/^\d+(?:\.\d+)?$/.test(priceText)) {
+        errors.push(`第 ${idx + 1} 行价格必须是最后一段数字：${original}`);
+        return;
+      }
+      const item = {
+        name: parts[0],
+        englishName: parts.slice(1, -1).join(" - "),
+        price: Number(priceText),
+        sourceLine: idx + 1
+      };
+      if (!item.name) {
+        errors.push(`第 ${idx + 1} 行缺少名称：${original}`);
+        return;
+      }
+      byName.set(item.name, item);
+    });
+    byName.forEach(item => parsed.push(item));
+    return { parsed, errors };
+  }
+
+  function previewMenuImport() {
+    const { parsed, errors } = parseMenuImportText($("textImportInput").value);
+    pendingMenuImport = parsed.map(item => {
+      const exists = menu.some(m => m.name.trim() === item.name.trim());
+      return { ...item, status: exists ? "覆盖" : "新增" };
+    });
+    const rows = pendingMenuImport.map(item => `<tr><td>${escapeHTML(item.name)}</td><td>${escapeHTML(item.englishName)}</td><td>${money(item.price)}</td><td>${item.status}</td></tr>`).join("");
+    const errorHTML = errors.length ? `<div class="import-error"><strong>未识别内容</strong><br>${errors.map(escapeHTML).join("<br>")}</div>` : "";
+    const previewHTML = rows ? `<div class="import-preview"><table><thead><tr><th>名称</th><th>副名称</th><th>价格</th><th>状态</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty">没有识别到可导入的菜品</div>`;
+    $("textImportPreview").innerHTML = `${previewHTML}${errorHTML ? `<div style="height:10px"></div>${errorHTML}` : ""}`;
+    $("confirmTextImportBtn").classList.toggle("hidden", !pendingMenuImport.length);
+  }
+
+  function confirmMenuImport() {
+    if (!pendingMenuImport.length) return;
+    pendingMenuImport.forEach(item => {
+      const idx = menu.findIndex(m => m.name.trim() === item.name.trim());
+      if (idx >= 0) {
+        menu[idx].englishName = item.englishName;
+        menu[idx].price = item.price;
+      } else {
+        menu.push({ id: uid("item"), name: item.name, englishName: item.englishName, category: "未分类", price: item.price, active: true });
+      }
+    });
+    persistCatalog();
+    renderCatalogManagement();
+    renderMenuList();
+    closeTextImport();
+    alert(`已导入 ${pendingMenuImport.length} 个菜品`);
+  }
+
+  async function renderHistory(orders) {
+    orders = orders.map(migrateOrder).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    $("historyList").innerHTML = orders.length ? orders.map(o => `<div class="panel"><div class="between"><div><strong>${escapeHTML(o.displayNo)}</strong> <span class="muted">${o.status === "completed" ? "已完成" : o.status === "cancelled" ? "已取消" : "进行中"}</span><div class="muted">${o.bizDate} · ${formatFullTime(o.createdAt)}</div></div><strong>${money(o.total)}</strong></div><div style="height:8px"></div>${(o.items||[]).map(itemLineHTML).join("")}</div>`).join("") : `<div class="empty">没有记录</div>`;
+  }
+
+  async function checkForUpdate(manual=false) {
+    if (!("serviceWorker" in navigator)) { if (manual) $("updateStatus").textContent = "当前环境不支持 PWA 更新检查。"; return; }
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) { if (manual) $("updateStatus").textContent = "尚未注册 Service Worker。HTML 单文件本地打开时不会有 PWA 更新机制。"; return; }
+    await reg.update();
+    if (reg.waiting) showUpdateToast(reg.waiting);
+    else if (manual) $("updateStatus").textContent = `当前已是最新版本（${APP_VERSION}）。`;
+  }
+  function showUpdateToast(sw) { pendingSW = sw; $("updateToast").classList.remove("hidden"); }
+  function setupServiceWorkerUpdate() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg) return;
+      if (reg.waiting) showUpdateToast(reg.waiting);
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => { if (nw.state === "installed" && navigator.serviceWorker.controller) showUpdateToast(nw); });
+      });
+    });
+    navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
+  }
+
+  function bindEvents() {
+    document.querySelectorAll(".tab").forEach(btn => btn.onclick = () => showView(btn.dataset.view));
+    $("bottomOrderBtn").onclick = () => { cart = []; showView("orderView"); };
+    $("backToQueueBtn").onclick = () => showView("queueView");
+    $("categoryFilter").onchange = renderMenuList;
+    $("submitOrderBtn").onclick = submitOrder;
+    $("closeModalBtn").onclick = closeModal;
+    $("orderModal").onclick = e => { if (e.target.id === "orderModal") closeModal(); };
+    $("closeItemConfigBtn").onclick = closeItemConfig;
+    $("itemConfigModal").onclick = e => { if (e.target.id === "itemConfigModal") closeItemConfig(); };
+    $("openTextImportBtn").onclick = openTextImport;
+    $("closeTextImportBtn").onclick = closeTextImport;
+    $("textImportModal").onclick = e => { if (e.target.id === "textImportModal") closeTextImport(); };
+    $("parseTextImportBtn").onclick = previewMenuImport;
+    $("clearTextImportBtn").onclick = () => { $("textImportInput").value = ""; $("textImportPreview").innerHTML = ""; $("confirmTextImportBtn").classList.add("hidden"); pendingMenuImport = []; };
+    $("confirmTextImportBtn").onclick = confirmMenuImport;
+    $("loadHistoryBtn").onclick = async () => { const d = $("historyDate").value || getBusinessDate(); renderHistory(await store.getByDate(d)); };
+    $("loadAllHistoryBtn").onclick = async () => renderHistory(await store.getAll());
+    $("addItemBtn").onclick = () => { const name = $("newItemName").value.trim(); if (!name) return alert("请输入菜品名称"); menu.push({ id: uid("item"), name, englishName: $("newItemEnglishName").value.trim(), category: $("newItemCategory").value.trim() || "未分类", price: Number($("newItemPrice").value || 0), active: true }); persistCatalog(); $("newItemName").value = $("newItemEnglishName").value = $("newItemCategory").value = $("newItemPrice").value = ""; renderCatalogManagement(); renderMenuList(); };
+    $("addAddonBtn").onclick = () => { const name = $("newAddonName").value.trim(); if (!name) return alert("请输入加料名称"); addons.push({ id: uid("addon"), name, price: Number($("newAddonPrice").value || 0), active: true }); persistCatalog(); $("newAddonName").value = $("newAddonPrice").value = ""; renderCatalogManagement(); renderCart(); };
+    $("saveSettingsBtn").onclick = async () => { settings.numberMode = $("numberMode").value; settings.tokenCount = Number($("tokenCount").value || 8); settings.autoPrefix = $("autoPrefix").value.trim() || "A"; settings.cutoffHour = Number($("cutoffHour").value || 0); settings.currency = $("currency").value || "$"; persistCatalog(); await loadToday(); alert("设置已保存"); };
+    $("checkUpdateBtn").onclick = () => checkForUpdate(true);
+    $("dismissUpdateBtn").onclick = () => $("updateToast").classList.add("hidden");
+    $("applyUpdateBtn").onclick = () => { if (pendingSW) pendingSW.postMessage({ type: "SKIP_WAITING" }); else location.reload(); };
+    $("exportBtn").onclick = exportData;
+    $("importInput").onchange = importData;
+    $("resetBtn").onclick = async () => { if (!confirm("确认清空全部订单与设置？")) return; await store.clear(); localStorage.removeItem(LS_SETTINGS); localStorage.removeItem(LS_MENU); localStorage.removeItem(LS_ADDONS); location.reload(); };
+  }
+  function syncSettingsForm() { $("numberMode").value = settings.numberMode; $("tokenCount").value = settings.tokenCount; $("autoPrefix").value = settings.autoPrefix; $("cutoffHour").value = settings.cutoffHour; $("currency").value = settings.currency; $("historyDate").value = todayInputDate(); }
+  async function exportData() { const data = { version: "4.2", exportedAt: nowISO(), settings, menu, addons, orders: await store.getAll() }; const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `order-backup-${getBusinessDate()}.json`; a.click(); URL.revokeObjectURL(url); }
+  async function importData(e) { const file = e.target.files[0]; if (!file) return; try { const data = JSON.parse(await file.text()); settings = { ...DEFAULT_SETTINGS, ...(data.settings || {}) }; menu = (data.menu || DEFAULT_MENU).map(normalizeMenuItem); addons = (data.addons || DEFAULT_ADDONS).map(normalizeAddon).filter(a => !isLegacySpiceAddon(a.name)); persistCatalog(); await store.clear(); for (const o of (data.orders || [])) await store.put(migrateOrder(o)); syncSettingsForm(); await loadToday(); alert("导入完成"); } catch { alert("导入失败，请确认 JSON 文件格式"); } finally { e.target.value = ""; } }
+
+  async function init() { await initStore(); bindEvents(); syncSettingsForm(); renderMenuList(); renderCart(); renderCatalogManagement(); await loadToday(); setupServiceWorkerUpdate(); }
+  init();
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch((err) => {
+      console.log("Service worker registration failed:", err);
+    });
+  });
+}
+</script>
+
+</body>
+</html>
